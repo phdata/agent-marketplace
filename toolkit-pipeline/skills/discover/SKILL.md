@@ -20,6 +20,9 @@ On failure surface the `hint:` line and stop (`/toolkit-core:setup` / `/toolkit-
 
 Additional prerequisites beyond toolkit-check:
 
+- **Platform**: the pipeline process supports Snowflake and Databricks only — both the
+  datasource being discovered and the spec's `targetPlatform`. If the user's datasource is
+  another type, stop here and explain.
 - **LLM access**: agent commands call an LLM. With no `llmClient` block in `toolkit.conf`, the
   toolkit falls back to Amazon Bedrock via the phData auth flow (works out of the box for phData
   consultants). Others need an `llmClient { type = openai|anthropic ... }` block — API key via

@@ -35,6 +35,9 @@ The dataspec field reference and per-tooling examples live in [references/](refe
 
 - **toolkit-core** (installed automatically as a dependency): toolkit binary, project, and a
   configured datasource. Skills preflight with `toolkit-check`.
+- **Platform**: the pipeline process supports **Snowflake and Databricks** only (datasource and
+  `targetPlatform`). The other JDBC types toolkit-core can connect serve the broader toolkit
+  workflows (scan/profile/diff/translate), not this plugin.
 - **LLM access**: `toolkit agent *` commands call an LLM. With no `llmClient` block in
   `toolkit.conf` the toolkit falls back to Amazon Bedrock through the phData auth flow; non-phData
   users add an `llmClient` block (OpenAI/Anthropic) with the API key referenced as `${ENV_VAR}`.
