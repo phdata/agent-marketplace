@@ -81,9 +81,19 @@ detect() {
         [[ -n "$names" ]] && count="$(printf '%s\n' "$names" | wc -l | tr -d ' ')"
         printf 'datasource_count=%s\n' "$count"
         printf 'datasources=%s\n' "$(printf '%s' "$names" | tr '\n' ',' )"
+        # Optional llmClient block: report its type, or 'none' (phData users fall
+        # back to Amazon Bedrock via the toolkit auth flow when none is set).
+        llm_type="$(awk '
+            /llmClient[[:space:]]*\{/ { f = 1 }
+            f && /type[[:space:]]*=/ {
+                sub(/.*=[[:space:]]*/, ""); gsub(/["{}]/, ""); print; exit
+            }
+        ' "$conf")"
+        printf 'llm_client=%s\n' "${llm_type:-none}"
     else
         printf 'datasource_count=0\n'
         printf 'datasources=\n'
+        printf 'llm_client=none\n'
     fi
 }
 

@@ -93,7 +93,9 @@ authentication, finish Step 3 and re-run `toolkit admin extract ds` from the pro
 Re-run `toolkit-check`:
 
 - exit 0 → setup is complete. If the user's next move is connecting a database, suggest
-  `/toolkit-core:connect`; if they just want to explore, `toolkit ds tutorial` is a
-  zero-credential practice environment.
+  `/toolkit-core:connect`; if they plan to use the toolkit agent commands (e.g. the
+  toolkit-pipeline plugin) with their own LLM provider, `/toolkit-core:llm` configures that
+  (optional — phData users get a Bedrock fallback automatically); if they just want to explore,
+  `toolkit ds tutorial` is a zero-credential practice environment.
 - exit 13 → the project has no datasource yet: hand off to `/toolkit-core:connect`.
 - anything else → revisit the matching step above.

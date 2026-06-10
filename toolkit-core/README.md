@@ -11,6 +11,7 @@ declare a dependency on it and preflight with one command.
 |---|---|
 | `/toolkit-core:setup` | Guided install + configuration: Java, binary on PATH, auth, project init |
 | `/toolkit-core:connect` | Add/verify a JDBC connection + datasource for any supported type, including driver installs |
+| `/toolkit-core:llm` | Configure the optional `llmClient` block (Bedrock/OpenAI/Anthropic) for `toolkit agent *` commands |
 | `/toolkit-core:status` | Doctor-style report of the current toolkit state |
 
 ## Bash commands (on PATH while the plugin is enabled)

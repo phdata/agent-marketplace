@@ -17,7 +17,8 @@ toolkit-check || exit
 ```
 
 On failure surface the `hint:` line and stop. Same LLM + license prerequisites as discovery
-(Bedrock fallback for phData users; `toolkit agent *` is license-gated).
+(Bedrock fallback for phData users, `/toolkit-core:llm` to configure another provider;
+`toolkit agent *` is license-gated).
 
 Then verify the contract(s): each `discovery-out/<name>/data-contract.json` should have
 `approvedByHuman: true` / empty `humanReviewItems`. If review items remain, send the user back

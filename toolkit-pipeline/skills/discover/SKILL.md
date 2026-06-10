@@ -25,8 +25,7 @@ Additional prerequisites beyond toolkit-check:
   another type, stop here and explain.
 - **LLM access**: agent commands call an LLM. With no `llmClient` block in `toolkit.conf`, the
   toolkit falls back to Amazon Bedrock via the phData auth flow (works out of the box for phData
-  consultants). Others need an `llmClient { type = openai|anthropic ... }` block — API key via
-  `${ENV_VAR}`, never inline.
+  consultants). Others configure a provider with `/toolkit-core:llm` (Bedrock/OpenAI/Anthropic).
 - **License**: `toolkit agent *` is license-gated; an authorization error means the user's token
   doesn't include agent access — that's a licensing conversation, not a config bug.
 - **Cost note**: without a prebuilt index, each discovery run scans and profiles the datasource

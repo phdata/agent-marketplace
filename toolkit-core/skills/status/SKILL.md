@@ -13,8 +13,9 @@ toolkit-setup detect     # raw facts: os, java, install path, project, datasourc
 ```
 
 Present a short table: binary (path + version), Java, project (`toolkit.conf` path), datasources
-(names). Use the `ok`/`fail` lines from `toolkit-check` as the source of truth and `detect`
-output for the detail values.
+(names), and LLM client (`llm_client` from detect; `none` means the phData Bedrock fallback for
+agent commands). Use the `ok`/`fail` lines from `toolkit-check` as the source of truth and
+`detect` output for the detail values.
 
 If the user wants connectivity verified too (this touches the network and connection-tests the
 datasource), add:

@@ -40,7 +40,7 @@ The dataspec field reference and per-tooling examples live in [references/](refe
   workflows (scan/profile/diff/translate), not this plugin.
 - **LLM access**: `toolkit agent *` commands call an LLM. With no `llmClient` block in
   `toolkit.conf` the toolkit falls back to Amazon Bedrock through the phData auth flow; non-phData
-  users add an `llmClient` block (OpenAI/Anthropic) with the API key referenced as `${ENV_VAR}`.
+  users configure a provider with `/toolkit-core:llm` (Bedrock/OpenAI/Anthropic).
 - **License**: agent commands are license-gated (`verifyAgentAccess`).
 - Keep datasource `filters` scoped in `toolkit.conf` — discovery scans/profiles live on each run.
 
