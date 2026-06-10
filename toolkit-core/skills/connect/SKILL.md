@@ -12,7 +12,10 @@ Goal: a named connection + datasource in the project's `toolkit.conf` that a sco
 
 Run `toolkit-check --level project`. On failure, surface the `hint:` line and stop — the user
 needs `/toolkit-core:setup` first. On success it prints the `toolkit.conf` path; that's the file
-to edit. `toolkit-check --list-datasources` shows what's already configured.
+to edit. If a `note:` line follows, heed it: the toolkit only reads
+`$TOOLKIT_PROJECT_HOME/toolkit.conf` (default `./toolkit.conf`), so run every `toolkit` command
+in this skill from the conf's directory (or export `TOOLKIT_PROJECT_HOME`).
+`toolkit-check --list-datasources` shows what's already configured.
 
 ## Step 1 — gather
 

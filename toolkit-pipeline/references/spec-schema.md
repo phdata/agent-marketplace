@@ -49,7 +49,7 @@ entirely: discovery picks a strategy and records its reasoning in the contract.
 
 - `dbt` only: `dbtProfile` — dbt profile name to reference in generated artifacts.
 - `pyspark` only: `computeType` (`serverless` default, or `cluster`) and `clusterId`
-  (required when `computeType: cluster`).
+  (needed when `computeType: cluster` — the parser doesn't enforce it up front).
 
 ## Advanced producer fields (normally omit)
 

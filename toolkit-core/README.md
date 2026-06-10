@@ -48,6 +48,12 @@ toolkit-check || exit   # surface the hint: line to the user and stop
 Known limitation: the datasource level parses `toolkit.conf` textually; datasources defined via
 HOCON `include` files aren't detected (use `--level connect` for the authoritative answer).
 
+Project resolution: `toolkit-check` walks parent directories to *find* `toolkit.conf`, but the
+toolkit itself reads only `$TOOLKIT_PROJECT_HOME/toolkit.conf` (default `./toolkit.conf`). When
+the conf lives in a parent directory, `ok project` is followed by a `note:` line — run toolkit
+commands from that directory or export `TOOLKIT_PROJECT_HOME`. The connect-level probe sets
+`TOOLKIT_PROJECT_HOME` itself, so it is correct from any cwd.
+
 ### `toolkit-setup`
 
 Mechanical helpers behind `/toolkit-core:setup`:

@@ -40,6 +40,13 @@
 # Known limitation: the datasource level parses toolkit.conf textually. Datasources
 # defined in HOCON include files are not detected; define them in toolkit.conf or
 # rely on `--level connect` for the authoritative answer.
+#
+# Project resolution: this script walks parent directories to FIND toolkit.conf, but
+# the toolkit itself does not — it reads $TOOLKIT_PROJECT_HOME/toolkit.conf (default:
+# ./toolkit.conf). When the conf is found in a parent, the ok-project output adds a
+# note: line telling the caller to run toolkit commands from that directory or export
+# TOOLKIT_PROJECT_HOME. The connect-level probe sets TOOLKIT_PROJECT_HOME itself, so
+# it is correct from any cwd.
 
 set -u
 
@@ -199,6 +206,16 @@ if ! conf="$(find_project_conf)"; then
         "run /toolkit-core:setup to initialize a toolkit project here"
 fi
 say "ok project: $conf"
+conf_dir="$(cd "$(dirname "$conf")" && pwd)"
+# Normalize before comparing so a trailing slash or relative TOOLKIT_PROJECT_HOME
+# doesn't trigger a spurious note.
+tph="${TOOLKIT_PROJECT_HOME:-}"
+if [[ -n "$tph" && -d "$tph" ]]; then
+    tph="$(cd "$tph" && pwd)"
+fi
+if [[ "$conf_dir" != "$PWD" && "$conf_dir" != "$tph" ]]; then
+    say "note: the toolkit only reads \$TOOLKIT_PROJECT_HOME/toolkit.conf (default ./toolkit.conf) — run toolkit commands from $conf_dir or export TOOLKIT_PROJECT_HOME=$conf_dir"
+fi
 [[ "$LEVEL" == "project" ]] && exit 0
 
 # ---------- level: datasource ----------
@@ -217,7 +234,8 @@ say "ok datasource: $(printf '%s' "$ds_names" | tr '\n' ' ')"
 # ---------- level: connect (network) ----------
 # `toolkit ds list` connection-tests datasources; scope with --datasource when
 # only one matters, since any broken datasource fails the whole listing.
-if out="$(toolkit ds list ${DATASOURCE:+"$DATASOURCE"} 2>&1)"; then
+# TOOLKIT_PROJECT_HOME pins the probe to the conf we found, whatever the cwd.
+if out="$(TOOLKIT_PROJECT_HOME="$conf_dir" toolkit ds list ${DATASOURCE:+"$DATASOURCE"} 2>&1)"; then
     say "ok connect: toolkit ds list succeeded${DATASOURCE:+ for $DATASOURCE}"
     exit 0
 fi

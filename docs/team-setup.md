@@ -6,7 +6,9 @@ To give everyone working in a repo the phData plugins automatically, check this 
 ```json
 {
   "extraKnownMarketplaces": {
-    "phdata": { "source": "github:phdata/agent-marketplace" }
+    "phdata": {
+      "source": { "source": "github", "repo": "phdata/agent-marketplace" }
+    }
   },
   "enabledPlugins": {
     "toolkit-core@phdata": true,

@@ -17,6 +17,8 @@ toolkit-check || exit
 ```
 
 On failure surface the `hint:` line and stop (`/toolkit-core:setup` / `/toolkit-core:connect`).
+If it prints a `note:` about the project directory, run every `toolkit` command below from that
+directory (or export `TOOLKIT_PROJECT_HOME`) — the toolkit doesn't search parent directories.
 
 Additional prerequisites beyond toolkit-check:
 

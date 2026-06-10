@@ -16,7 +16,9 @@ generated code passes or retries are exhausted.
 toolkit-check || exit
 ```
 
-On failure surface the `hint:` line and stop. Same LLM + license prerequisites as discovery
+On failure surface the `hint:` line and stop. If it prints a `note:` about the project
+directory, run every `toolkit` command below from that directory (or export
+`TOOLKIT_PROJECT_HOME`). Same LLM + license prerequisites as discovery
 (Bedrock fallback for phData users, `/toolkit-core:llm` to configure another provider;
 `toolkit agent *` is license-gated).
 
@@ -44,18 +46,24 @@ Tooling comes from the contract, not a flag.
 
 ## Step 2 — review the output
 
-Per-table layout under `pipeline-out/<name>/`:
+Typical per-table layout under `pipeline-out/<name>/` (sql tooling shown):
 
 ```
 build-report.txt                 # what was generated, judge verdicts, retries
 build-result.json
-transforms/ddl/create_<name>.sql
+judge-report-attempt-<n>.json    # one per judge attempt
+transforms/ddl/create_<name>.sql # plus sequences etc. when the design needs them
 transforms/transform/initial_load_<name>.sql
 transforms/transform/incremental_load_<name>.sql
-tests/sql/test_<name>_*.sql      # data-quality tests from the contract's assertions
+tests/                           # data-quality test SQL from the contract's assertions
 tests/test-config.yaml
 mockdata/datagen-spec.yaml       # synthetic-data spec for toolkit datagen
 ```
+
+Test file paths are agent-chosen and vary by run and tooling (`tests/sql/`, bare `tests/`, or
+for dbt nested under `tests/tests/` with companion YAML) — list the directory rather than
+assuming. Full-refresh tables get a single `load_<name>.sql` instead of the
+initial/incremental pair.
 
 Read `build-report.txt` first — surface judge failures or exhausted retries to the user rather
 than presenting the code as clean. Then walk the transforms: does the incremental load respect
@@ -70,8 +78,8 @@ assertions?
 - **Seed synthetic data** (e.g. into a dev/test schema):
   `toolkit datagen jdbc <datasource> pipeline-out/<name>/mockdata/datagen-spec.yaml`
 - **Run the generated tests**:
-  `toolkit ds exec <datasource> --file pipeline-out/<name>/tests/sql/<test>.sql` — a failing
-  test returns rows; empty results mean pass.
+  `toolkit ds exec <datasource> --file <a test .sql under pipeline-out/<name>/tests/>` — a
+  failing test returns rows; empty results mean pass.
 
 For dbt contracts, the generated project files belong in the user's dbt repo — offer to move
 them and run `dbt parse` if dbt is installed locally.
