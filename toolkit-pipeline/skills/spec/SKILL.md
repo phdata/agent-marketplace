@@ -39,8 +39,8 @@ Gather, in order (skip what the user already said):
    `change_detection: watermark`; append-only facts: `incremental_append`; small/reference
    tables: `full_refresh`/`ctas`.
 6. **Context**: where the source data lives (database/schema/tables, source system names).
-   This steers discovery's search — and note the datasource's `filters` in `toolkit.conf`
-   bound what discovery can see at all.
+   This steers discovery's search — and if the datasource has a `filters` block in
+   `toolkit.conf`, that bounds what discovery can see at all.
 
 Write the file as `specs/<target_table>.yaml` in the working directory (one spec per target
 table), show it to the user, and point at `/toolkit-pipeline:discover` as the next step.

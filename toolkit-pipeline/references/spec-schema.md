@@ -69,7 +69,8 @@ Whatever the `format`, discovery needs to learn from `content`:
 4. **Business rules** — derivations, filters, SCD expectations, exclusions
 
 `context` should say where source data lives (database/schema/tables) so discovery searches the
-right place — the datasource `filters` in `toolkit.conf` bound what it can see at all.
+right place — and if the datasource has a `filters` block in `toolkit.conf`, that bounds what
+discovery can see at all.
 
 Complete examples: [examples/sql-spec.yaml](examples/sql-spec.yaml),
 [examples/dbt-spec.yaml](examples/dbt-spec.yaml),

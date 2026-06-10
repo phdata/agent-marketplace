@@ -23,9 +23,10 @@ Ask for whatever isn't already known:
 3. **Endpoint**: host/account, port, database (type-specific — the example file shows exactly
    what's needed).
 4. **Auth method**: keypair/password/OAuth/IAM, depending on type.
-5. **Scope**: which databases/schemas this work actually touches. Always set a
-   `filters { patterns = [ "DB.SCHEMA.*" ] }` block — unscoped scans against shared warehouses
-   are slow and noisy, and every downstream toolkit command reuses the filter.
+5. **Scope** (optional): which databases/schemas this work touches. On large or shared
+   warehouses, a `filters { patterns = [ "DB.SCHEMA.*" ] }` block keeps scans fast and quiet,
+   and every downstream toolkit command reuses it. Skip it to cover everything the connection
+   can see.
 
 ## Step 2 — write the config
 
@@ -52,7 +53,8 @@ ds {
   datasources {
     my_source {
       connection = ${connections.my_source}
-      filters { patterns = [ "MY_DB.MY_SCHEMA.*" ] }
+      // Optional: scope scans to specific databases/schemas
+      // filters { patterns = [ "MY_DB.MY_SCHEMA.*" ] }
     }
   }
 }
@@ -77,8 +79,8 @@ also already have one — check `ls lib/` first.
 
 1. `toolkit-check --level datasource --datasource <name>` — config parses and the datasource is
    visible.
-2. `toolkit ds scan <name>` — first real connection. The datasource-level `filters` block keeps
-   this scoped; for an even narrower probe add `--filter "MY_DB.MY_SCHEMA.*"`.
+2. `toolkit ds scan <name>` — first real connection. If a `filters` block is set it keeps this
+   scoped; without one, consider a narrow first probe via `--filter "MY_DB.MY_SCHEMA.*"`.
 3. On success, offer `toolkit ds show <name>:scan:latest --format html -o` to open the scanned
    metadata report.
 

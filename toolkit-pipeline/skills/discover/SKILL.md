@@ -30,7 +30,8 @@ Additional prerequisites beyond toolkit-check:
 - **License**: `toolkit agent *` is license-gated; an authorization error means the user's token
   doesn't include agent access — that's a licensing conversation, not a config bug.
 - **Cost note**: without a prebuilt index, each discovery run scans and profiles the datasource
-  live. Keep the datasource `filters` in `toolkit.conf` tight (see `/toolkit-core:connect`).
+  live. On large or shared warehouses, consider adding a datasource `filters` block in
+  `toolkit.conf` to keep that scoped (see `/toolkit-core:connect`).
 
 ## Step 1 — locate or author the spec(s)
 
