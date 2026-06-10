@@ -1,0 +1,30 @@
+# Dataspec: PySpark job on Databricks (serverless), DDL-format spec.
+tooling: pyspark
+targetPlatform: databricks
+materialization: merge
+computeType: serverless
+format: ddl
+loadStrategy:
+  type: incremental_merge
+content: |
+  Target table: mart.customer_basics
+
+  CREATE TABLE mart.customer_basics (
+      customer_id NUMBER(38, 0) NOT NULL,
+      customer_name VARCHAR(1000),
+      most_common_menu_type VARCHAR(1000),
+      count_lifetime_orders INT,
+      first_ordered_at DATETIME,
+      lifetime_spend NUMBER(20, 4)
+  );
+
+  Business Rules:
+  BR-01: customer_id — natural key from the raw customer table (grain: one row per customer)
+  BR-02: customer_name — first and last name concatenated
+  BR-03: most_common_menu_type — most frequent menu_type across the customer's orders
+  BR-04: count_lifetime_orders — count of the customer's orders
+  BR-05: first_ordered_at — datetime of the customer's first order
+  BR-06: lifetime_spend — total spend including tax across all items
+context: |
+  Source system: Jaffle customer loyalty system.
+  All data landed in Databricks in catalog phdata-dev-uc, schema RAW_POS.
