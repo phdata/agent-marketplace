@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+#
+# toolkit-setup — mechanical helpers behind the /toolkit-core:setup skill.
+#
+# Usage:
+#   toolkit-setup detect          print key=value facts about this machine's toolkit state
+#   toolkit-setup path <dir>      put <dir> on PATH by running that install's own
+#                                 'toolkit admin shell' (bash/zsh managed section)
+#   toolkit-setup project [dir]   initialize a toolkit project in dir (default: cwd)
+#                                 via 'toolkit init', then extract Data Source tool
+#                                 defaults via 'toolkit admin extract ds'
+#
+# Boundaries (by design):
+#   - never edits shell rc files itself — 'toolkit admin shell' owns that
+#   - never downloads the Toolkit CLI — it is license-gated; install docs:
+#     https://toolkit.phdata.io/docs/toolkit-cli#download
+#   - never runs 'toolkit auth' — credentials are the user's to enter
+#
+# Exit codes: 0 success, 2 usage error, 1 operation failed.
+
+set -u
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage() {
+    echo "usage: toolkit-setup detect | path <toolkit-install-dir> | project [dir]" >&2
+    exit 2
+}
+
+detect() {
+    printf 'os=%s\n' "$(uname -s)"
+    printf 'arch=%s\n' "$(uname -m)"
+
+    if command -v java >/dev/null 2>&1; then
+        printf 'java_version=%s\n' "$(java -version 2>&1 | head -1 | sed 's/"/'"'"'/g')"
+    else
+        printf 'java_version=none\n'
+    fi
+
+    if command -v toolkit >/dev/null 2>&1; then
+        printf 'toolkit_path=%s\n' "$(command -v toolkit)"
+        printf 'toolkit_version=%s\n' "$(toolkit --version 2>/dev/null | head -1 || echo unknown)"
+    else
+        printf 'toolkit_path=none\n'
+        printf 'toolkit_version=none\n'
+    fi
+
+    # Newest extracted CLI install that isn't on PATH yet, if any.
+    candidate=""
+    for dir in "$HOME"/Downloads/toolkit-cli-*/ "$HOME"/toolkit-cli-*/ /opt/toolkit-cli-*/; do
+        [[ -x "${dir}toolkit" ]] || continue
+        if [[ -z "$candidate" || "$dir" -nt "$candidate" ]]; then
+            candidate="$dir"
+        fi
+    done
+    printf 'candidate_install=%s\n' "${candidate:-none}"
+
+    # Enclosing toolkit project and configured datasources (via toolkit-check).
+    conf=""
+    if [[ -n "${TOOLKIT_PROJECT_HOME:-}" && -f "${TOOLKIT_PROJECT_HOME}/toolkit.conf" ]]; then
+        conf="${TOOLKIT_PROJECT_HOME}/toolkit.conf"
+    else
+        dir="$PWD"
+        while :; do
+            if [[ -f "$dir/toolkit.conf" ]]; then
+                conf="$dir/toolkit.conf"
+                break
+            fi
+            [[ "$dir" == "/" ]] && break
+            dir="$(dirname "$dir")"
+        done
+    fi
+    printf 'project_conf=%s\n' "${conf:-none}"
+
+    if [[ -n "$conf" ]]; then
+        names="$("$SCRIPT_DIR/toolkit-check" --list-datasources 2>/dev/null || true)"
+        count=0
+        [[ -n "$names" ]] && count="$(printf '%s\n' "$names" | wc -l | tr -d ' ')"
+        printf 'datasource_count=%s\n' "$count"
+        printf 'datasources=%s\n' "$(printf '%s' "$names" | tr '\n' ',' )"
+    else
+        printf 'datasource_count=0\n'
+        printf 'datasources=\n'
+    fi
+}
+
+path_setup() {
+    [[ $# -ge 1 ]] || usage
+    install_dir="${1%/}"
+    if [[ ! -x "$install_dir/toolkit" ]]; then
+        echo "error: no executable 'toolkit' in $install_dir" >&2
+        exit 1
+    fi
+    # Delegates rc-file editing to the toolkit's managed-section logic (bash/zsh).
+    "$install_dir/toolkit" admin shell
+}
+
+project_setup() {
+    target="${1:-$PWD}"
+    if [[ ! -d "$target" ]]; then
+        echo "error: directory does not exist: $target" >&2
+        exit 1
+    fi
+    if ! command -v toolkit >/dev/null 2>&1; then
+        echo "error: toolkit not on PATH — run 'toolkit-setup path <install-dir>' first" >&2
+        exit 1
+    fi
+    cd "$target" || exit 1
+    if [[ -f toolkit.conf ]]; then
+        echo "note: $target/toolkit.conf already exists, skipping 'toolkit init'"
+    else
+        toolkit init || exit 1
+    fi
+    if ! toolkit admin extract ds; then
+        echo "warn: 'toolkit admin extract ds' failed — authentication/license may be required."
+        echo "warn: run 'toolkit auth', then 'toolkit admin extract ds' from $target."
+    fi
+}
+
+[[ $# -ge 1 ]] || usage
+cmd="$1"
+shift
+case "$cmd" in
+    detect)  detect ;;
+    path)    path_setup "$@" ;;
+    project) project_setup "$@" ;;
+    *) usage ;;
+esac
