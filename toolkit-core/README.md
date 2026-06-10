@@ -53,11 +53,14 @@ Mechanical helpers behind `/toolkit-core:setup`:
 
 ```
 toolkit-setup detect          # key=value facts: os, java, toolkit path, candidate installs, project, datasources
-toolkit-setup path <dir>      # register <dir> on PATH via that install's own 'toolkit admin shell'
+toolkit-setup install         # official installer: Homebrew tap (macOS), repo.phdata.io script (Linux)
+toolkit-setup path <dir>      # register a manually-extracted <dir> on PATH via 'toolkit admin shell'
 toolkit-setup project [dir]   # 'toolkit init' + 'toolkit admin extract ds'
 ```
 
-It never edits shell rc files itself, never downloads the CLI (license-gated), and never runs
+It installs only through the official phData channels (`brew tap phdata/toolkit` +
+`brew install toolkit-cli` on macOS; `https://repo.phdata.io/toolkit-cli/install.sh` on Linux;
+prints the PowerShell command on Windows), never edits shell rc files itself, and never runs
 `toolkit auth` (credentials are the user's to enter).
 
 ## Hook
@@ -67,5 +70,6 @@ short advisory into context when it's missing, and always exits 0 — it never b
 
 ## Prerequisites
 
-A phData Toolkit license and download access (https://toolkit.phdata.io/docs/toolkit-cli#download).
-The plugin can detect and guide, but cannot install the CLI for you.
+Java LTS 11/17/21/25 (the installers handle this — Homebrew manages it as a dependency) and a
+phData Toolkit auth token for most commands (`toolkit auth`); some features are license-tiered
+(free vs pro). Install docs: https://toolkit.phdata.io/docs/toolkit-cli#installation

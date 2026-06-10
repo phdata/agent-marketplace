@@ -31,26 +31,36 @@ questions below (Java version, candidate installs, enclosing project).
 
 Check `candidate_install` from `toolkit-setup detect`:
 
-- **Candidate found** (an extracted `toolkit-cli-*` directory): confirm it with the user, then run
-  `toolkit-setup path <dir>`. This invokes that install's own `toolkit admin shell`, which appends
-  a managed PATH section to `~/.bashrc` / `~/.zshrc` (bash and zsh only). Tell the user to
-  `source` the rc file or open a new shell, then re-run `toolkit-check --level binary`.
-  Note: the current Claude Code Bash session may not pick up rc-file changes; if `toolkit` is
-  still not found, export the PATH directly for this session:
-  `export PATH="$PATH:<install-dir>"`.
-- **No candidate**: the CLI download is license-gated, so it cannot be fetched for the user.
-  Point them at the install docs — https://toolkit.phdata.io/docs/toolkit-cli#download — and ask
-  them to download and extract the archive (typically into `~/Downloads` or `~`), then return
-  here and re-run `toolkit-setup detect`.
+- **Candidate found** (a previously extracted `toolkit-cli-*` directory): confirm it with the
+  user, then run `toolkit-setup path <dir>`. This invokes that install's own
+  `toolkit admin shell`, which appends a managed PATH section to `~/.bashrc` / `~/.zshrc`
+  (bash and zsh only). Tell the user to `source` the rc file or open a new shell, then re-run
+  `toolkit-check --level binary`.
+- **No candidate**: install via the official channel for the platform — confirm with the user,
+  then run `toolkit-setup install`:
+  - **macOS**: `brew tap phdata/toolkit && brew install toolkit-cli` — Homebrew manages Java as
+    a dependency and puts `toolkit` on PATH automatically.
+  - **Linux**: `curl -fsSL https://repo.phdata.io/toolkit-cli/install.sh | sh` — installs to
+    `~/.local/opt/toolkit-cli` and adds it to PATH in the shell profile.
+  - **Windows**: the helper prints the PowerShell command for the user to run:
+    `irm https://repo.phdata.io/toolkit-cli/install.ps1 | iex`.
+
+  Manual zip install also remains an option: https://toolkit.phdata.io/docs/toolkit-cli#download
+
+After either path, note that the current Claude Code Bash session may not pick up rc-file/PATH
+changes; if `toolkit` is still not found here, export it for this session
+(`export PATH="$PATH:<install-dir>"`) and remind the user to open a new terminal for theirs.
 
 ## Step 2 — Java (only if `toolkit --version` fails)
 
-The toolkit runs on the JVM. If `toolkit-check` exited 11:
+The toolkit runs on the JVM and requires a Java LTS release: 11, 17, 21, or 25. Usually the
+installers handle this (Homebrew installs Java as a dependency; the Linux/Windows installers
+detect a missing JDK and guide the install). If `toolkit-check` exited 11 anyway:
 
 - `java_version=none` in detect output: suggest a platform-appropriate install (macOS:
-  `brew install temurin`; Linux: distro OpenJDK packages). A current LTS (11+) is safe.
+  `brew install temurin`; Linux: distro OpenJDK packages; Windows: `winget install` OpenJDK).
 - Java present but toolkit still fails: run `toolkit --version` directly and show the user the
-  error — likely a corrupted/partial extract; re-extracting the archive is the usual fix.
+  error — likely an unsupported Java version or a corrupted/partial extract.
 
 ## Step 3 — authenticate
 

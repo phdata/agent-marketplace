@@ -31,9 +31,11 @@ who trusts the workspace — see [docs/team-setup.md](docs/team-setup.md).
 
 ## Prerequisites
 
-The plugins do not (and cannot) install the Toolkit CLI itself — it is license-gated. They detect
-a missing or misconfigured toolkit and walk you through fixing it (`/toolkit-core:setup`), pointing
-at the [official install docs](https://toolkit.phdata.io/docs/toolkit-cli#download).
+The plugins detect a missing or misconfigured Toolkit CLI and fix it with you
+(`/toolkit-core:setup`): on macOS via the Homebrew tap (`brew install toolkit-cli`), on
+Linux/Windows via the official install scripts — see the
+[install docs](https://toolkit.phdata.io/docs/toolkit-cli#installation). Most toolkit commands
+also need an auth token (`toolkit auth`); some features are license-tiered (free vs pro).
 
 ## Contributing
 

@@ -159,8 +159,9 @@ if [[ $HOOK -eq 1 ]]; then
 The phData Toolkit CLI ('toolkit') is not on PATH in this session. If the user
 asks for Toolkit work (ds scan/profile, sql translate, datagen, agent
 discovery/pipeline-build, ...), suggest running /toolkit-core:setup first to
-install and configure it. Install docs:
-https://toolkit.phdata.io/docs/toolkit-cli#download
+install and configure it (Homebrew tap on macOS, install scripts on
+Linux/Windows). Install docs:
+https://toolkit.phdata.io/docs/toolkit-cli#installation
 EOF
     exit 0
 fi

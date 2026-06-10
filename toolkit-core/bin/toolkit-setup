@@ -4,16 +4,19 @@
 #
 # Usage:
 #   toolkit-setup detect          print key=value facts about this machine's toolkit state
-#   toolkit-setup path <dir>      put <dir> on PATH by running that install's own
-#                                 'toolkit admin shell' (bash/zsh managed section)
+#   toolkit-setup install         install the Toolkit CLI via the official channel for this
+#                                 platform: Homebrew tap on macOS, repo.phdata.io installer
+#                                 on Linux (prints the PowerShell command on other systems)
+#   toolkit-setup path <dir>      put a manually-extracted <dir> on PATH by running that
+#                                 install's own 'toolkit admin shell' (bash/zsh managed section)
 #   toolkit-setup project [dir]   initialize a toolkit project in dir (default: cwd)
 #                                 via 'toolkit init', then extract Data Source tool
 #                                 defaults via 'toolkit admin extract ds'
 #
 # Boundaries (by design):
-#   - never edits shell rc files itself — 'toolkit admin shell' owns that
-#   - never downloads the Toolkit CLI — it is license-gated; install docs:
-#     https://toolkit.phdata.io/docs/toolkit-cli#download
+#   - never edits shell rc files itself — 'toolkit admin shell' / the installers own that
+#   - installs only through the official phData channels (Homebrew tap, repo.phdata.io
+#     install script); manual zip docs: https://toolkit.phdata.io/docs/toolkit-cli#download
 #   - never runs 'toolkit auth' — credentials are the user's to enter
 #
 # Exit codes: 0 success, 2 usage error, 1 operation failed.
@@ -23,7 +26,7 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 usage() {
-    echo "usage: toolkit-setup detect | path <toolkit-install-dir> | project [dir]" >&2
+    echo "usage: toolkit-setup detect | install | path <toolkit-install-dir> | project [dir]" >&2
     exit 2
 }
 
@@ -47,7 +50,7 @@ detect() {
 
     # Newest extracted CLI install that isn't on PATH yet, if any.
     candidate=""
-    for dir in "$HOME"/Downloads/toolkit-cli-*/ "$HOME"/toolkit-cli-*/ /opt/toolkit-cli-*/; do
+    for dir in "$HOME"/Downloads/toolkit-cli-*/ "$HOME"/toolkit-cli-*/ /opt/toolkit-cli-*/ "$HOME"/.local/opt/toolkit-cli*/; do
         [[ -x "${dir}toolkit" ]] || continue
         if [[ -z "$candidate" || "$dir" -nt "$candidate" ]]; then
             candidate="$dir"
@@ -82,6 +85,31 @@ detect() {
         printf 'datasource_count=0\n'
         printf 'datasources=\n'
     fi
+}
+
+install_cli() {
+    if command -v toolkit >/dev/null 2>&1; then
+        echo "note: toolkit already on PATH at $(command -v toolkit) — nothing to install"
+        return 0
+    fi
+    case "$(uname -s)" in
+        Darwin)
+            if ! command -v brew >/dev/null 2>&1; then
+                echo "error: Homebrew not found — install it from https://brew.sh, or use the manual zip install:" >&2
+                echo "       https://toolkit.phdata.io/docs/toolkit-cli#download" >&2
+                exit 1
+            fi
+            brew tap phdata/toolkit && brew install toolkit-cli
+            ;;
+        Linux)
+            curl -fsSL https://repo.phdata.io/toolkit-cli/install.sh | sh
+            ;;
+        *)
+            echo "Unsupported platform for this helper. On Windows, run in PowerShell:" >&2
+            echo "  irm https://repo.phdata.io/toolkit-cli/install.ps1 | iex" >&2
+            exit 1
+            ;;
+    esac
 }
 
 path_setup() {
@@ -122,6 +150,7 @@ cmd="$1"
 shift
 case "$cmd" in
     detect)  detect ;;
+    install) install_cli ;;
     path)    path_setup "$@" ;;
     project) project_setup "$@" ;;
     *) usage ;;
