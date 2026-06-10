@@ -1,6 +1,6 @@
 ---
 name: connect
-description: Add or verify a JDBC connection and datasource in toolkit.conf for any supported type — Snowflake, SQL Server, Oracle, Postgres, MySQL, Hive, Databricks, Athena, SQLite — including JDBC driver installation for non-bundled types and verification via a scoped ds scan. Use when configuring data sources, fixing connection errors, or when toolkit-check reports no datasource.
+description: Add or verify a JDBC connection and datasource in toolkit.conf for any supported type — Snowflake, SQL Server, Oracle, Postgres, MySQL, Hive, Databricks, Athena — including JDBC driver installation for non-bundled types and verification via a scoped ds scan. Use when configuring data sources, fixing connection errors, or when toolkit-check reports no datasource.
 ---
 
 # Connect a datasource
@@ -18,11 +18,12 @@ to edit. `toolkit-check --list-datasources` shows what's already configured.
 
 Ask for whatever isn't already known:
 
-1. **Type**: snowflake, sqlserver, oracle, postgres, mysql, hive, databricks, athena, sqlite.
-2. **Endpoint**: host/account, port, database (type-specific — the example file shows exactly
+1. **Type**: snowflake, sqlserver, oracle, postgres, mysql, hive, databricks, athena.
+2. **Name**: one name, used for both the connection and the datasource (e.g. `prod_sf`).
+3. **Endpoint**: host/account, port, database (type-specific — the example file shows exactly
    what's needed).
-3. **Auth method**: keypair/password/OAuth/IAM, depending on type.
-4. **Scope**: which databases/schemas this work actually touches. Always set a
+4. **Auth method**: keypair/password/OAuth/IAM, depending on type.
+5. **Scope**: which databases/schemas this work actually touches. Always set a
    `filters { patterns = [ "DB.SCHEMA.*" ] }` block — unscoped scans against shared warehouses
    are slow and noisy, and every downstream toolkit command reuses the filter.
 
@@ -32,8 +33,10 @@ Read the matching example, `examples/<type>.conf`, in this skill's directory. It
 copy-pastable `connections` + `ds.datasources` pair with the exact JDBC URL template, required
 `properties`, and the driver jar name for non-bundled types.
 
-Merge it into the project's `toolkit.conf` (top-level `connections` and `ds` blocks), renaming
-the placeholder datasource to whatever the user wants to call it. The shape:
+Merge it into the project's `toolkit.conf` (top-level `connections` and `ds` blocks).
+**Name the connection and the datasource identically** (the examples already do) and rename both
+placeholders together — toolkit commands switch between connection-keyed and datasource-keyed
+contexts, and matching names keep them interchangeable. The shape:
 
 ```hocon
 connections {
@@ -64,7 +67,7 @@ nothing more.
 
 ## Step 3 — driver (non-bundled types only)
 
-Snowflake and SQLite drivers ship with the toolkit. For every other type, the vendor JDBC jar
+The Snowflake driver ships with the toolkit. For every other type, the vendor JDBC jar
 must be in the project's `lib/` directory (create it if needed). The example file's header names
 the jar (e.g. `mssql-jdbc-13.2.0.jre11.jar`, `postgresql-42.7.x.jar`,
 `athena-jdbc-3.x-with-dependencies.jar`). Download links are on each vendor's site; the user may

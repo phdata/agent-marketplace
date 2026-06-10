@@ -1,6 +1,6 @@
 {
   "name": "toolkit-core",
-  "description": "phData Toolkit CLI foundation: verify/install the toolkit binary, configure shell PATH, initialize a toolkit project, and configure JDBC connections and datasources (Snowflake, SQL Server, Oracle, Postgres, MySQL, Hive, Databricks, Athena, SQLite). Required by all phData workflow plugins.",
+  "description": "phData Toolkit CLI foundation: verify/install the toolkit binary, configure shell PATH, initialize a toolkit project, and configure JDBC connections and datasources (Snowflake, SQL Server, Oracle, Postgres, MySQL, Hive, Databricks, Athena). Required by all phData workflow plugins.",
   "version": "0.1.0",
   "author": { "name": "phData" }
 }
