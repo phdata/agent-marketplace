@@ -8,15 +8,16 @@ description: Configure the optional llmClient block in toolkit.conf so toolkit a
 `toolkit agent *` commands (and `toolkit codegen ask/prompt`) call an LLM, configured by a
 top-level `llmClient` block in `toolkit.conf` — a peer of `connections` and `ds`.
 
-**This is optional for phData consultants**: with no `llmClient` block, the toolkit falls back
-to Amazon Bedrock and the phData auth flow brokers access automatically. If the user is on the
-phData auth flow and has no special model preference, nothing needs configuring — verify (below)
-and stop.
+**phData consultants work without any block**: the toolkit falls back to Amazon Bedrock and the
+phData auth flow brokers access automatically. Even then, recommend adding the Bedrock example
+block: the fallback runs on short AWS SDK default timeouts, and long agent calls (pipeline-build
+judge loops) can exceed them — the examples set `requestTimeout`/`socketTimeout` to `1000s`.
 
 ## Step 0 — current state
 
 `toolkit-check --level project` finds the `toolkit.conf` to edit; `toolkit-setup detect` reports
-`llm_client=<type|none>`. `none` + phData auth = Bedrock fallback, which is fine.
+`llm_client=<type|none>`. `none` + phData auth = Bedrock fallback — functional, but add the
+Bedrock block anyway for the 1000s timeouts.
 
 ## Step 1 — pick a provider
 
@@ -36,6 +37,10 @@ Read the matching example, `examples/<provider>.conf`, in this skill's directory
 **Secrets rule (same as connections): API keys go in as `${ENV_VAR}` references, never literal
 values.** For `openai`/`anthropic` the `apiKey` line can also be omitted entirely — the client
 falls back to reading the standard env var directly.
+
+**Timeouts: default both `requestTimeout` and `socketTimeout` to `1000s`** (Bedrock and OpenAI;
+the Anthropic client doesn't expose timeout settings). Unset values fall back to short SDK/HTTP
+defaults that long agent runs routinely exceed.
 
 ## Step 3 — verify
 
