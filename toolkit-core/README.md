@@ -60,15 +60,15 @@ Mechanical helpers behind `/toolkit-core:setup`:
 
 ```
 toolkit-setup detect          # key=value facts: os, java, toolkit path, candidate installs, project, datasources
-toolkit-setup install         # official installer: Homebrew tap (macOS), repo.phdata.io script (Linux)
+toolkit-setup install         # runs the official repo.phdata.io install script (macOS/Linux; prints Windows commands)
 toolkit-setup path <dir>      # register a manually-extracted <dir> on PATH via 'toolkit admin shell'
 toolkit-setup project [dir]   # 'toolkit init' + 'toolkit admin extract ds'
 ```
 
-It installs only through the official phData channels (`brew tap phdata/toolkit` +
-`brew install toolkit-cli` on macOS; `https://repo.phdata.io/toolkit-cli/install.sh` on Linux;
-prints the PowerShell command on Windows), never edits shell rc files itself, and never runs
-`toolkit auth` (credentials are the user's to enter).
+Installation delegates entirely to the official install scripts at `repo.phdata.io` — the single
+source of truth across macOS, Linux, and Windows; this plugin maintains no install logic of its
+own. It never edits shell rc files itself (the installer and `toolkit admin shell` own that) and
+never runs `toolkit auth` (credentials are the user's to enter).
 
 ## Hook
 

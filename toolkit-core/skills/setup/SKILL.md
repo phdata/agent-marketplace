@@ -36,16 +36,17 @@ Check `candidate_install` from `toolkit-setup detect`:
   `toolkit admin shell`, which appends a managed PATH section to `~/.bashrc` / `~/.zshrc`
   (bash and zsh only). Tell the user to `source` the rc file or open a new shell, then re-run
   `toolkit-check --level binary`.
-- **No candidate**: install via the official channel for the platform — confirm with the user,
-  then run `toolkit-setup install`:
-  - **macOS**: `brew tap phdata/toolkit && brew install toolkit-cli` — Homebrew manages Java as
-    a dependency and puts `toolkit` on PATH automatically.
-  - **Linux**: `curl -fsSL https://repo.phdata.io/toolkit-cli/install.sh | sh` — installs to
-    `~/.local/opt/toolkit-cli` and adds it to PATH in the shell profile.
-  - **Windows**: the helper prints the PowerShell command for the user to run:
-    `irm https://repo.phdata.io/toolkit-cli/install.ps1 | iex`.
+- **No candidate**: confirm with the user, then run `toolkit-setup install`. It delegates to the
+  official phData install script — the single source of truth for installation:
+  - **macOS / Linux**: runs `https://repo.phdata.io/toolkit-cli/install.sh`, which downloads the
+    CLI, verifies its SHA256, installs to `~/.local/opt/toolkit-cli`, adds it to PATH in the
+    shell profile (bash/zsh/fish), and prints JDK guidance if Java is missing.
+  - **Windows**: prints the official commands for the user to run —
+    PowerShell `irm https://repo.phdata.io/toolkit-cli/install.ps1 | iex`.
 
-  Manual zip install also remains an option: https://toolkit.phdata.io/docs/toolkit-cli#download
+  Alternatives if the user prefers: Homebrew on macOS (`brew tap phdata/toolkit && brew install
+  toolkit-cli` — then `brew upgrade` owns updates and Java comes as a dependency), or the manual
+  zip install (https://toolkit.phdata.io/docs/toolkit-cli#installation).
 
 After either path, note that the current Claude Code Bash session may not pick up rc-file/PATH
 changes; if `toolkit` is still not found here, export it for this session

@@ -4,9 +4,9 @@
 #
 # Usage:
 #   toolkit-setup detect          print key=value facts about this machine's toolkit state
-#   toolkit-setup install         install the Toolkit CLI via the official channel for this
-#                                 platform: Homebrew tap on macOS, repo.phdata.io installer
-#                                 on Linux (prints the PowerShell command on other systems)
+#   toolkit-setup install         install the Toolkit CLI by running the official
+#                                 repo.phdata.io install script (macOS and Linux; prints
+#                                 the official Windows commands on other systems)
 #   toolkit-setup path <dir>      put a manually-extracted <dir> on PATH by running that
 #                                 install's own 'toolkit admin shell' (bash/zsh managed section)
 #   toolkit-setup project [dir]   initialize a toolkit project in dir (default: cwd)
@@ -15,8 +15,9 @@
 #
 # Boundaries (by design):
 #   - never edits shell rc files itself — 'toolkit admin shell' / the installers own that
-#   - installs only through the official phData channels (Homebrew tap, repo.phdata.io
-#     install script); manual zip docs: https://toolkit.phdata.io/docs/toolkit-cli#download
+#   - delegates installation entirely to the official install scripts at repo.phdata.io
+#     (the single source of truth — no separate install logic is maintained here);
+#     manual zip docs: https://toolkit.phdata.io/docs/toolkit-cli#installation
 #   - never runs 'toolkit auth' — credentials are the user's to enter
 #
 # Exit codes: 0 success, 2 usage error, 1 operation failed.
@@ -103,20 +104,26 @@ install_cli() {
         return 0
     fi
     case "$(uname -s)" in
-        Darwin)
-            if ! command -v brew >/dev/null 2>&1; then
-                echo "error: Homebrew not found — install it from https://brew.sh, or use the manual zip install:" >&2
-                echo "       https://toolkit.phdata.io/docs/toolkit-cli#download" >&2
-                exit 1
+        Darwin|Linux)
+            # The official install script owns download, SHA256 verification,
+            # placement (~/.local/opt/toolkit-cli), and shell-profile PATH setup.
+            #
+            # Temporary shim: the script calls sha256sum, which stock macOS lacks
+            # (the native tool is `shasum -a 256`). Provide it on PATH until the
+            # upstream fallback lands in the toolkit repo's cli/linux/install.sh.
+            shim=""
+            if ! command -v sha256sum >/dev/null 2>&1; then
+                shim="$(mktemp -d)"
+                printf '#!/bin/sh\nexec shasum -a 256 "$@"\n' >"$shim/sha256sum"
+                chmod +x "$shim/sha256sum"
             fi
-            brew tap phdata/toolkit && brew install toolkit-cli
-            ;;
-        Linux)
-            curl -fsSL https://repo.phdata.io/toolkit-cli/install.sh | sh
+            curl -fsSL https://repo.phdata.io/toolkit-cli/install.sh \
+                | PATH="$PATH${shim:+:$shim}" sh
             ;;
         *)
-            echo "Unsupported platform for this helper. On Windows, run in PowerShell:" >&2
-            echo "  irm https://repo.phdata.io/toolkit-cli/install.ps1 | iex" >&2
+            echo "Run the official installer for Windows:" >&2
+            echo "  PowerShell:     irm https://repo.phdata.io/toolkit-cli/install.ps1 | iex" >&2
+            echo "  Command Prompt: curl -fsSL https://repo.phdata.io/toolkit-cli/install.cmd -o install.cmd && install.cmd" >&2
             exit 1
             ;;
     esac
