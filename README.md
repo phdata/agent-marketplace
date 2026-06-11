@@ -11,7 +11,7 @@ so engineering repos don't each carry their own `.claude/skills/`.
 | [toolkit-core](toolkit-core/) | Toolkit CLI foundation: install, PATH setup, project init, JDBC connection/datasource configuration. Required by all other toolkit plugins. |
 | [toolkit-pipeline](toolkit-pipeline/) | Dataspec-driven pipeline generation via `toolkit agent discovery` and `toolkit agent pipeline-build`: SQL, dbt, or PySpark transforms plus data-quality tests and a synthetic-data spec. |
 
-## Install (individual)
+## Install — Claude Code
 
 Inside Claude Code:
 
@@ -24,10 +24,29 @@ Inside Claude Code:
 Installing `toolkit-pipeline` automatically installs its `toolkit-core` dependency from this
 marketplace.
 
-## Install (team / repo-wide)
+For team/repo-wide auto-install, check a `.claude/settings.json` into the consuming repo —
+see [docs/team-setup.md](docs/team-setup.md).
 
-Check a `.claude/settings.json` into the consuming repo so the plugins auto-install for everyone
-who trusts the workspace — see [docs/team-setup.md](docs/team-setup.md).
+## Install — Cortex Code
+
+Cortex Code consumes the same plugin format but not the marketplace catalog, so install each
+plugin by its subdirectory:
+
+```
+cortex plugin install github:phdata/agent-marketplace/toolkit-core
+cortex plugin install github:phdata/agent-marketplace/toolkit-pipeline
+```
+
+Notes:
+
+- Append `@<branch>` to pin a branch (e.g. `github:phdata/agent-marketplace/toolkit-core@feature/initial_plugin`
+  while testing pre-release changes); the subdirectory path goes *before* the `@`.
+- Cortex does not auto-install dependencies — install `toolkit-core` explicitly alongside
+  `toolkit-pipeline`.
+- `cortex plugin update` re-fetches from the pinned source; `cortex plugin list` shows what's
+  installed and enabled.
+- Teams can also ship these via a Snowflake connection profile — see
+  [docs/team-setup.md](docs/team-setup.md).
 
 ## Prerequisites
 
