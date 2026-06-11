@@ -27,4 +27,4 @@ content: |
   BR-06: lifetime_spend — total spend including tax across all items
 context: |
   Source system: Jaffle customer loyalty system.
-  All data landed in Databricks in catalog phdata-dev-uc, schema RAW_POS.
+  All data landed in Databricks in catalog my_catalog, schema RAW_POS.
