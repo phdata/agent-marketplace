@@ -1,0 +1,31 @@
+# Dataspec: SQL pipeline on Snowflake, natural-language spec (the lightweight path —
+# no DDL required; discovery resolves columns and sources against the live datasource).
+tooling: sql
+targetPlatform: snowflake
+materialization: merge
+format: natural_language
+loadStrategy:
+  type: incremental_merge
+  change_detection: watermark
+content: |
+  Target table: ANALYTICS.MART.DIM_CUSTOMER
+
+  Build a customer dimension at one row per customer_id.
+
+  Columns:
+  - customer_sk: surrogate key derived from customer_id
+  - customer_id: natural key from the source customer table (not null)
+  - customer_name: first and last name concatenated
+  - email
+  - signup_date
+  - lifetime_orders: count of completed orders for the customer
+  - lifetime_spend: total order amount including tax
+
+  Business rules:
+  - BR-01: one row per customer_id (grain)
+  - BR-02: exclude customers with a NULL customer_id
+  - BR-03: lifetime metrics consider only orders with status = 'COMPLETED'
+context: |
+  Source system: retail OLTP replicated into Snowflake.
+  Customer data lands in RAW_DB.CRM (customers table); orders land in
+  RAW_DB.SALES (orders, order_lines tables).

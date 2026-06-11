@@ -1,0 +1,17 @@
+{
+  "name": "phdata",
+  "description": "phData's catalog of coding-agent extensions: plugins packaging phData Toolkit CLI workflows (setup, datasource connection, pipeline generation) as skills, preflight scripts, and hooks.",
+  "owner": { "name": "phData", "url": "https://github.com/phdata" },
+  "plugins": [
+    {
+      "name": "toolkit-core",
+      "source": "./toolkit-core",
+      "description": "phData Toolkit CLI foundation: install, PATH setup, project init, JDBC connection/datasource configuration"
+    },
+    {
+      "name": "toolkit-pipeline",
+      "source": "./toolkit-pipeline",
+      "description": "Dataspec-driven pipeline generation via toolkit agent discovery and pipeline-build: SQL, dbt, or PySpark transforms plus tests and a datagen spec"
+    }
+  ]
+}

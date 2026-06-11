@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+#
+# toolkit-check — layered preflight checks for the phData Toolkit CLI.
+#
+# Usage:
+#   toolkit-check [--level binary|project|datasource|connect]
+#                 [--datasource NAME] [--quiet] [--hook] [--list-datasources]
+#
+# Levels are cumulative (binary -> project -> datasource -> connect); the first
+# failure stops the run. Default level: datasource — everything that can be
+# verified without touching the network. The connect level is opt-in because it
+# runs `toolkit ds list`, which connection-tests the configured datasources.
+#
+# Exit codes:
+#   0   all requested checks passed
+#   2   usage error
+#   10  toolkit binary not on PATH
+#   11  binary present but won't run (Java problem)
+#   12  no toolkit project found (no toolkit.conf in cwd, parents, or $TOOLKIT_PROJECT_HOME)
+#   13  no datasource configured in toolkit.conf
+#   14  connectivity probe failed
+#
+# Output contract (machine-parsable, stable):
+#   ok <level>: <detail>
+#   fail <level>: <detail>
+#   hint: <the single actionable fix>
+#
+# Workflow-plugin skills should run `toolkit-check` (or `--level connect` before
+# commands that hit the database) and, on a non-zero exit, surface the hint:
+# line to the user and stop.
+#
+# Modes:
+#   --quiet             no output, exit code only
+#   --hook              SessionStart hook mode: PATH lookup only (no JVM start),
+#                       prints a short advisory when the toolkit is missing, and
+#                       ALWAYS exits 0 so sessions are never blocked
+#   --list-datasources  print configured datasource names (one per line) and exit;
+#                       used by toolkit-setup and the /toolkit-core skills
+#
+# Known limitation: the datasource level parses toolkit.conf textually. Datasources
+# defined in HOCON include files are not detected; define them in toolkit.conf or
+# rely on `--level connect` for the authoritative answer.
+#
+# Project resolution: this script walks parent directories to FIND toolkit.conf, but
+# the toolkit itself does not — it reads $TOOLKIT_PROJECT_HOME/toolkit.conf (default:
+# ./toolkit.conf). When the conf is found in a parent, the ok-project output adds a
+# note: line telling the caller to run toolkit commands from that directory or export
+# TOOLKIT_PROJECT_HOME. The connect-level probe sets TOOLKIT_PROJECT_HOME itself, so
+# it is correct from any cwd.
+
+set -u
+
+LEVEL="datasource"
+DATASOURCE=""
+QUIET=0
+HOOK=0
+LIST_DS=0
+
+usage() {
+    echo "usage: toolkit-check [--level binary|project|datasource|connect] [--datasource NAME] [--quiet] [--hook] [--list-datasources]" >&2
+    exit 2
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --level)
+            [[ $# -ge 2 ]] || usage
+            LEVEL="$2"
+            shift 2
+            ;;
+        --datasource)
+            [[ $# -ge 2 ]] || usage
+            DATASOURCE="$2"
+            shift 2
+            ;;
+        --quiet) QUIET=1; shift ;;
+        --hook) HOOK=1; shift ;;
+        --list-datasources) LIST_DS=1; shift ;;
+        *) usage ;;
+    esac
+done
+
+case "$LEVEL" in
+    binary|project|datasource|connect) ;;
+    *) usage ;;
+esac
+
+say() {
+    [[ $QUIET -eq 1 ]] && return 0
+    printf '%s\n' "$*"
+}
+
+# fail <exit-code> <level> <detail> <hint>
+fail() {
+    say "fail $2: $3"
+    say "hint: $4"
+    exit "$1"
+}
+
+# Print the path to toolkit.conf for the enclosing project, or fail.
+find_project_conf() {
+    if [[ -n "${TOOLKIT_PROJECT_HOME:-}" && -f "${TOOLKIT_PROJECT_HOME}/toolkit.conf" ]]; then
+        printf '%s\n' "${TOOLKIT_PROJECT_HOME}/toolkit.conf"
+        return 0
+    fi
+    local dir="$PWD"
+    while :; do
+        if [[ -f "$dir/toolkit.conf" ]]; then
+            printf '%s\n' "$dir/toolkit.conf"
+            return 0
+        fi
+        [[ "$dir" == "/" ]] && return 1
+        dir="$(dirname "$dir")"
+    done
+}
+
+# Print datasource names defined in a toolkit.conf, one per line.
+# Handles both block form (ds { datasources { name { ... } } }) and
+# dot-path form (ds.datasources.name { ... }).
+list_datasources() {
+    local conf="$1"
+    {
+        # Block form: track brace depth inside the datasources block; names are
+        # the keys that open a block (or are assigned) at depth 1.
+        awk '
+            {
+                line = $0
+                sub(/\/\/.*/, "", line)
+                sub(/#.*/, "", line)
+                if (!inds) {
+                    if (line ~ /(^|[^A-Za-z0-9_])(ds\.)?datasources[[:space:]]*\{/) {
+                        inds = 1
+                        depth = 0
+                        sub(/.*datasources[[:space:]]*/, "", line)
+                    } else {
+                        next
+                    }
+                }
+                if (depth == 1) {
+                    tmp = line
+                    gsub(/^[[:space:]]+/, "", tmp)
+                    if (tmp ~ /^"?[A-Za-z][A-Za-z0-9_-]*"?[[:space:]]*(=[[:space:]]*)?\{/) {
+                        name = tmp
+                        sub(/[[:space:]]*(=[[:space:]]*)?\{.*/, "", name)
+                        gsub(/"/, "", name)
+                        print name
+                    }
+                }
+                opens = gsub(/\{/, "{", line)
+                closes = gsub(/\}/, "}", line)
+                depth += opens - closes
+                if (inds && depth <= 0 && opens + closes > 0) inds = 0
+            }
+        ' "$conf"
+        # Dot-path form: ds.datasources.name { ... }
+        sed -nE 's|^[[:space:]]*(ds\.)?datasources\.([A-Za-z][A-Za-z0-9_-]*).*|\2|p' "$conf"
+    } | sort -u
+}
+
+# ---------- hook mode: fast, silent on success, never blocks ----------
+if [[ $HOOK -eq 1 ]]; then
+    if command -v toolkit >/dev/null 2>&1; then
+        exit 0
+    fi
+    cat <<'EOF'
+The phData Toolkit CLI ('toolkit') is not on PATH in this session. If the user
+asks for Toolkit work (ds scan/profile, sql translate, datagen, agent
+discovery/pipeline-build, ...), suggest running /toolkit-core:setup first to
+install and configure it (Homebrew tap on macOS, install scripts on
+Linux/Windows). Install docs:
+https://toolkit.phdata.io/docs/toolkit-cli#installation
+EOF
+    exit 0
+fi
+
+# ---------- list mode ----------
+if [[ $LIST_DS -eq 1 ]]; then
+    conf="$(find_project_conf)" || exit 12
+    list_datasources "$conf"
+    exit 0
+fi
+
+# ---------- level: binary ----------
+if ! command -v toolkit >/dev/null 2>&1; then
+    fail 10 binary "toolkit not found on PATH" \
+        "run /toolkit-core:setup to install and configure the Toolkit CLI"
+fi
+toolkit_path="$(command -v toolkit)"
+
+if ! toolkit --version >/dev/null 2>&1; then
+    if command -v java >/dev/null 2>&1; then
+        java_line="$(java -version 2>&1 | head -1)"
+        fail 11 java "toolkit found at $toolkit_path but 'toolkit --version' failed (java present: $java_line)" \
+            "run /toolkit-core:setup to diagnose the install (Java version, corrupted install)"
+    else
+        fail 11 java "toolkit found at $toolkit_path but won't run and no 'java' on PATH" \
+            "install Java (e.g. 'brew install temurin'), then run /toolkit-core:setup"
+    fi
+fi
+say "ok binary: $toolkit_path"
+[[ "$LEVEL" == "binary" ]] && exit 0
+
+# ---------- level: project ----------
+if ! conf="$(find_project_conf)"; then
+    fail 12 project "no toolkit.conf found in $PWD, its parents, or \$TOOLKIT_PROJECT_HOME" \
+        "run /toolkit-core:setup to initialize a toolkit project here"
+fi
+say "ok project: $conf"
+conf_dir="$(cd "$(dirname "$conf")" && pwd)"
+# Normalize before comparing so a trailing slash or relative TOOLKIT_PROJECT_HOME
+# doesn't trigger a spurious note.
+tph="${TOOLKIT_PROJECT_HOME:-}"
+if [[ -n "$tph" && -d "$tph" ]]; then
+    tph="$(cd "$tph" && pwd)"
+fi
+if [[ "$conf_dir" != "$PWD" && "$conf_dir" != "$tph" ]]; then
+    say "note: the toolkit only reads \$TOOLKIT_PROJECT_HOME/toolkit.conf (default ./toolkit.conf) — run toolkit commands from $conf_dir or export TOOLKIT_PROJECT_HOME=$conf_dir"
+fi
+[[ "$LEVEL" == "project" ]] && exit 0
+
+# ---------- level: datasource ----------
+ds_names="$(list_datasources "$conf")"
+if [[ -z "$ds_names" ]]; then
+    fail 13 datasource "no datasources defined under ds.datasources in $conf" \
+        "run /toolkit-core:connect to add a connection and datasource"
+fi
+if [[ -n "$DATASOURCE" ]] && ! printf '%s\n' "$ds_names" | grep -qx "$DATASOURCE"; then
+    fail 13 datasource "datasource '$DATASOURCE' not found in $conf (configured: $(printf '%s' "$ds_names" | tr '\n' ' '))" \
+        "run /toolkit-core:connect to add the '$DATASOURCE' datasource"
+fi
+say "ok datasource: $(printf '%s' "$ds_names" | tr '\n' ' ')"
+[[ "$LEVEL" == "datasource" ]] && exit 0
+
+# ---------- level: connect (network) ----------
+# `toolkit ds list` connection-tests datasources; scope with --datasource when
+# only one matters, since any broken datasource fails the whole listing.
+# TOOLKIT_PROJECT_HOME pins the probe to the conf we found, whatever the cwd.
+if out="$(TOOLKIT_PROJECT_HOME="$conf_dir" toolkit ds list ${DATASOURCE:+"$DATASOURCE"} 2>&1)"; then
+    say "ok connect: toolkit ds list succeeded${DATASOURCE:+ for $DATASOURCE}"
+    exit 0
+fi
+detail="$(printf '%s\n' "$out" | grep -m1 '⛔' | sed 's/^⛔[^[:space:]]*[[:space:]]*//')"
+fail 14 connect "${detail:-toolkit ds list failed}" \
+    "run /toolkit-core:connect to verify the connection (env vars exported? driver jar in lib/? network/VPN?)"

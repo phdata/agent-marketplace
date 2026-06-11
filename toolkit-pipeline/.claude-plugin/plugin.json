@@ -1,0 +1,9 @@
+{
+  "name": "toolkit-pipeline",
+  "description": "Generate data pipelines with the phData Toolkit agent stack: author or supply a DiscoveryConfig dataspec, run toolkit agent discovery to produce a reviewable data contract, resolve human-review items, then pipeline-build SQL, dbt, or PySpark transforms with data-quality tests and a synthetic-data spec.",
+  "version": "0.1.0",
+  "author": { "name": "phData" },
+  "dependencies": [
+    { "name": "toolkit-core", "version": "^0.1" }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "toolkit-core",
+  "description": "phData Toolkit CLI foundation: verify/install the toolkit binary, configure shell PATH, initialize a toolkit project, configure JDBC connections and datasources (Snowflake, SQL Server, Oracle, Postgres, MySQL, Hive, Databricks, Athena), and optionally configure the LLM client for toolkit agent commands. Required by all phData workflow plugins.",
+  "version": "0.1.0",
+  "author": { "name": "phData" }
+}
