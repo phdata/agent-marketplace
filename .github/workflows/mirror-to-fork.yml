@@ -1,0 +1,59 @@
+# Mirror this repository's main branch to agent-marketplace-fork.
+#
+# The "fork" is not a GitHub fork — it is an independent internal repository that is
+# kept as a mirror of this one, and it is what the claude.ai plugin marketplace syncs
+# from. Without this workflow the two drift, and the marketplace serves stale plugins.
+name: Mirror to fork
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # manual re-sync, e.g. after fixing a failed run
+
+# Never let two mirror runs race: a later push must not land before an earlier one.
+concurrency:
+  group: mirror-to-fork
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    # Don't run from forks of this repo, which have no access to the secret.
+    if: github.repository == 'phdata/agent-marketplace'
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # the mirror needs full history, not a shallow clone
+          persist-credentials: false
+
+      - name: Push main to the mirror
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${MIRROR_TOKEN}" ]; then
+            echo "::error::MIRROR_TOKEN is not set. Add a token with write access to" \
+                 "phdata/agent-marketplace-fork as a repository secret named MIRROR_TOKEN."
+            exit 1
+          fi
+
+          git remote add mirror \
+            "https://x-access-token:${MIRROR_TOKEN}@github.com/phdata/agent-marketplace-fork.git"
+
+          # Only main is mirrored, and only main's own content. The push trigger already
+          # limits this to main, but workflow_dispatch lets the operator pick any ref in the
+          # UI — a feature branch or a tag — and HEAD would then be that ref's commit. Pushing
+          # it would publish the wrong tree as the mirror's main, so refuse instead.
+          if [ "${GITHUB_REF_TYPE}" != "branch" ] || [ "${GITHUB_REF_NAME}" != "main" ]; then
+            echo "::error::Refusing to mirror from ${GITHUB_REF_TYPE} '${GITHUB_REF_NAME}' —" \
+                 "only main is mirrored. Re-run this workflow from main."
+            exit 1
+          fi
+
+          # Force so the mirror tracks this repo exactly. A non-fast-forward here means
+          # someone committed directly to the mirror; that work is intentionally discarded,
+          # because the mirror is a copy and this repository is the source of truth.
+          git push --force mirror "HEAD:refs/heads/main"
+          echo "Mirrored main at $(git rev-parse --short HEAD) to phdata/agent-marketplace-fork"
