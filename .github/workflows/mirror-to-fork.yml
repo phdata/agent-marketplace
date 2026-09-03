@@ -1,4 +1,4 @@
-# Mirror this repository's main branch and release tags to agent-marketplace-fork.
+# Mirror this repository's main branch to agent-marketplace-fork.
 #
 # The "fork" is not a GitHub fork — it is an independent internal repository that is
 # kept as a mirror of this one, and it is what the claude.ai plugin marketplace syncs
@@ -8,7 +8,6 @@ name: Mirror to fork
 on:
   push:
     branches: [main]
-    tags: ['*']
   workflow_dispatch:        # manual re-sync, e.g. after fixing a failed run
 
 # Never let two mirror runs race: a later push must not land before an earlier one.
@@ -25,10 +24,10 @@ jobs:
       - name: Check out full history
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0    # mirroring needs every commit and tag, not a shallow clone
+          fetch-depth: 0    # the mirror needs full history, not a shallow clone
           persist-credentials: false
 
-      - name: Push main and tags to the mirror
+      - name: Push main to the mirror
         env:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
@@ -43,28 +42,18 @@ jobs:
           git remote add mirror \
             "https://x-access-token:${MIRROR_TOKEN}@github.com/phdata/agent-marketplace-fork.git"
 
-          # Only main is mirrored. Two ways a non-main ref reaches this step: a tag build,
-          # and workflow_dispatch, which lets the operator pick any ref in the UI. Neither may
-          # move the mirror's main — on a tag build HEAD is the tagged commit (older than main
-          # when a release is tagged retroactively), and on a dispatch from a feature branch
-          # HEAD is that branch's tip. Either would publish the wrong tree as main.
-          if [ "${GITHUB_REF_TYPE}" = "branch" ] && [ "${GITHUB_REF_NAME}" != "main" ]; then
-            echo "::error::Refusing to mirror from branch '${GITHUB_REF_NAME}' — only main is" \
-                 "mirrored. Re-run this workflow from main."
+          # Only main is mirrored, and only main's own content. The push trigger already
+          # limits this to main, but workflow_dispatch lets the operator pick any ref in the
+          # UI — a feature branch or a tag — and HEAD would then be that ref's commit. Pushing
+          # it would publish the wrong tree as the mirror's main, so refuse instead.
+          if [ "${GITHUB_REF_TYPE}" != "branch" ] || [ "${GITHUB_REF_NAME}" != "main" ]; then
+            echo "::error::Refusing to mirror from ${GITHUB_REF_TYPE} '${GITHUB_REF_NAME}' —" \
+                 "only main is mirrored. Re-run this workflow from main."
             exit 1
           fi
 
-          if [ "${GITHUB_REF_TYPE}" = "branch" ]; then
-            # Force so the mirror tracks this repo exactly. A non-fast-forward here means
-            # someone committed directly to the mirror; that work is intentionally discarded,
-            # because the mirror is a copy and this repository is the source of truth.
-            git push --force mirror "HEAD:refs/heads/main"
-            echo "Mirrored main at $(git rev-parse --short HEAD)"
-          else
-            echo "Tag build (${GITHUB_REF_NAME}) — leaving the mirror's main untouched"
-          fi
-
-          # Release tags (<plugin>--v<version>) drive versioned plugin installs, so the
-          # mirror needs them too. --force updates a tag that was moved deliberately.
-          git push --force --tags mirror
-          echo "Mirrored tags to phdata/agent-marketplace-fork"
+          # Force so the mirror tracks this repo exactly. A non-fast-forward here means
+          # someone committed directly to the mirror; that work is intentionally discarded,
+          # because the mirror is a copy and this repository is the source of truth.
+          git push --force mirror "HEAD:refs/heads/main"
+          echo "Mirrored main at $(git rev-parse --short HEAD) to phdata/agent-marketplace-fork"
