@@ -1,8 +1,8 @@
 # informatica-etl-conversion
 
-Convert an Informatica PowerCenter estate to Snowflake or Databricks pipelines with the
-[phData Toolkit](https://toolkit.phdata.io/docs) CLI — a large estate wave by wave, a small one
-in a single pass.
+Convert a set of Informatica PowerCenter mappings into Snowflake or Databricks pipelines with
+the [phData Toolkit](https://toolkit.phdata.io/docs) CLI — a large migration wave by wave, a
+small one in a single pass.
 
 `:collect` sizes the corpus and asks which route to take when it's small (around 20 mappings
 or fewer): the full assessment below, or a direct conversion that skips straight to `:wave`.
@@ -24,7 +24,7 @@ migration-plan/<ds>/plan.txt + inventory.csv        (the plan of record)
 ```
 
 The legacy datasource is never connected to unless the user has access and wants a scan — a
-stub connection whose JDBC scheme only sets the SQL dialect is enough to assess an estate.
+stub connection whose JDBC scheme only sets the SQL dialect is enough for the assessment.
 
 ## Phase B — convert, one plan group at a time
 
@@ -82,7 +82,7 @@ numbering that may or may not start at 0. `infa-plan` reads the snapshot JSON di
   toolkit binary, a project, and configured datasources. Skills preflight with `toolkit-check`.
 - **Legacy source dialect** must be one of oracle, mssql, teradata, snowflake, databricks — the
   dialects the collect store parses. Database access is optional; a stub connection assesses an
-  estate offline.
+  legacy database offline.
 - **Target platform**: Snowflake or Databricks, with the mappings' source data already landed
   there — that's what discovery validates against.
 - **dbt or PySpark tooling**, if the wave emits either: `pipeline-build` executes the generated

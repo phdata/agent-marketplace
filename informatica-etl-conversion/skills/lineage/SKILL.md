@@ -1,6 +1,6 @@
 ---
 name: lineage
-description: Extract table lineage from the collected Informatica corpus with ds lineage, then spot-check dataflows with --lookup and --table. Use after ds collect etl, when lineage looks incomplete, or when the user asks what feeds or reads a table in the legacy estate.
+description: Extract table lineage from the collected Informatica corpus with ds lineage, then spot-check dataflows with --lookup and --table. Use after ds collect etl, when lineage looks incomplete, or when the user asks what feeds or reads a table in the legacy database.
 ---
 
 # Lineage: collected mappings → dataflow graph
@@ -48,7 +48,7 @@ A few failed patterns are normal and not worth chasing: Informatica's dataflow e
 the XML structure, not from the embedded SQL, so a failed parse costs fidelity on that
 mapping's SQL overrides rather than dropping it from the graph — and `etl-extract` translates
 those overrides separately at wave time anyway. A *low* success rate is the signal worth
-acting on, and it usually means the datasource type is the wrong dialect for this estate: fix
+acting on, and it usually means the datasource type is the wrong dialect for these mappings: fix
 it, re-run collect with `--replace-all`, and extract again. To see the actual failures,
 `toolkit ds lineage legacy_dw --export-errors <dir>` writes them out with a clustered summary
 (it's a separate mode that reads stored results — it doesn't re-extract).
@@ -62,11 +62,14 @@ toolkit ds lineage legacy_dw --lookup DW.DIM_CUSTOMER    # upstream + downstream
 toolkit ds lineage legacy_dw --table DW.DIM_CUSTOMER     # metadata, column usage, readers, writers
 ```
 
-`--lookup` accepts `%` wildcards. If the trees match the user's mental model of the estate, the
+`--lookup` accepts `%` wildcards. If the trees match the user's mental model of the system, the
 corpus is trustworthy enough to plan from; if whole branches are missing, the export is
 incomplete — back to `/informatica-etl-conversion:collect`.
 
 These lookups stay useful for the whole migration, long after the plan is cut — come back here
 whenever someone asks what feeds or reads a table.
+
+Command reference: the `ds lineage` sections of `docs/toolkit/data-source.adoc`, written into
+the project by `toolkit init`.
 
 Then hand off to `/informatica-etl-conversion:plan`.

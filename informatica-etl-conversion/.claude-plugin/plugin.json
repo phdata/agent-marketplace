@@ -1,6 +1,6 @@
 {
   "name": "informatica-etl-conversion",
-  "description": "Convert an Informatica PowerCenter estate to Snowflake or Databricks pipelines: import PowerCenter XML exports with toolkit ds collect etl, build lineage, and decompose the estate into ordered scored migration waves with ds migration-plan, then convert each plan group through toolkit agent etl-extract, agent discovery with a grouped human-review queue, and agent pipeline-build. Small estates skip the assessment and convert in a single pass.",
+  "description": "Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines: import PowerCenter XML exports with toolkit ds collect etl, build lineage, and decompose the estate into ordered scored migration waves with ds migration-plan, then convert each plan group through toolkit agent etl-extract, agent discovery with a grouped human-review queue, and agent pipeline-build. A small number of mappings can skip the assessment and convert in a single pass.",
   "version": "0.2.0",
   "author": { "name": "phData" },
   "dependencies": [

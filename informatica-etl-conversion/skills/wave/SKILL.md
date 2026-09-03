@@ -11,8 +11,8 @@ Runs in one of two modes, decided back in `/informatica-etl-conversion:collect` 
   within a wave are independent by construction, so one group is also the right size for a
   review queue: one schema or domain, one reviewer's competence. Groups the plan marks as
   co-migrating (a dependency cycle) run together as a single combined group.
-- **Direct** — no plan exists; the whole corpus is converted in one run. Chosen for small
-  estates. Everything below is identical except Step 1 (where the mapping list comes from) and
+- **Direct** — no plan exists; the whole corpus is converted in one run. Chosen when there are
+  few mappings. Everything below is identical except Step 1 (where the mapping list comes from) and
   Step 2 (what gets staged); the dry-run gate, review queue, build, and report are unchanged.
 
 If it isn't obvious which mode applies, check for `migration-plan/<ds>/` — and ask rather than
@@ -54,7 +54,7 @@ paths into the session at startup. Use that path; if the hook didn't run, the sc
   `filters { patterns = [ "LANDING_DB.RAW.*" ] }`. This is also what keeps discovery honest
   about landed data: scoped to the landing schema, a spec whose sources never arrived fails
   for an obvious reason instead of matching something plausible elsewhere in the warehouse.
-- **Extraction flags**: `--source-dialect` (the legacy estate's dialect), `--target-platform`,
+- **Extraction flags**: `--source-dialect` (the legacy database's dialect), `--target-platform`,
   and the output tooling are not recorded anywhere between runs. Confirm all three with the
   user each time rather than guessing from earlier logs — the dry-run log preserves the counts,
   not the flags.
@@ -107,7 +107,7 @@ user sees the scope:
 ```
 
 **Check the group's size before going further.** The review queue in Step 6 is per group, and
-a group's mappings all land in it at once. Real estates produce lopsided groups — a 121-group
+a group's mappings all land in it at once. Real migrations produce lopsided groups — a 121-group
 Teradata plan had a median of a few mappings but one group with 83. Past roughly 20 mappings,
 say so and offer the choice: re-cut the plan with a smaller `--max-group-size` (back to
 `/informatica-etl-conversion:plan`), or proceed knowing the review queue will be long and is
@@ -315,5 +315,8 @@ and, in planned mode, the group's outbound contract edges restated as cutover co
 ("this group feeds MART_FIN.SALES_DETAIL — sequence or dual-run that boundary"). Finish with
 the next group to run — or, in direct mode, note that deployment order across the converted
 mappings was never analyzed, so someone has to sequence the cutover by hand.
+
+Command reference for `etl-extract`, `discovery` and `pipeline-build`: `docs/toolkit/agent.adoc`,
+written into the project by `toolkit init`.
 
 Then `/informatica-etl-conversion:status` for the whole-migration picture.

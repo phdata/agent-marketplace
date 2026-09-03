@@ -40,7 +40,7 @@ stat columns, table rows fill the score columns.
 
 1. Header: table/group/wave counts, unparseable pattern count, and the heuristic effects block
    — how many objects were held out and why. When it says a count "rests on naming convention
-   alone", check those names against the estate's real conventions before trusting them.
+   alone", check those names against the real naming conventions before trusting them.
 2. Wave table: one row per group with complexity, priority, and risk (band plus raw score).
 3. Per group: `feeds X: A -> B` contract edges, then the process table, then the table table.
 
@@ -51,17 +51,17 @@ stat columns, table rows fill the score columns.
 | `DEAD` | In the scan, absent from lineage, and query history exists — no observed usage | Genuine do-not-migrate candidate; confirm with an owner |
 | `SET_ASIDE` | Absent from lineage, but lineage came only from imported files | "Not in the files" ≠ unused (analysts may read it directly) — review, don't schedule |
 | `PLUMBING` | Temp/staging table inside a process | Nothing to do; collapsed out of the flow graph |
-| `EXTERNAL` | Referenced by lineage, outside the scanned estate | A dependency callout — someone else owns it |
+| `EXTERNAL` | Referenced by lineage but outside what was scanned — the plan calls these "outside the scanned estate" | A dependency callout — someone else owns it |
 | `INTERFACE` | A file, queue, or service an ETL package reads or writes | Real work with no warehouse equivalent: rebuild as a stage, external table, unload, or connector |
 | `PLACEHOLDER` | An ETL object naming nothing real (port-shape stubs like `DummySource`) | Ignore; held out so it doesn't weld unrelated pipelines together |
-| `AUDIT_SINK` | Batch audit, load detail, event log | Written by much of the estate, migrated by none of it — replace with the target platform's own observability |
+| `AUDIT_SINK` | Batch audit, load detail, event log | Written by much of the system and migrated by none of it — replace with the target platform's own observability |
 | `EXCLUDED` | Excluded by `--exclude` | User's own call |
 
 ## Tuning knobs
 
 | Knob | Default | Reach for it when |
 |---|---|---|
-| `--max-group-size <tables>` | tuned for large estates | A group is too big for one team to migrate at once — splits it along the upstream lineage of its final tables. It caps *tables*, not mappings, so a group can still end up mapping-heavy: a real 121-group Teradata plan had one group with 83 Informatica mappings, which is one review queue. Check group sizes before converting |
+| `--max-group-size <tables>` | tuned for large migrations | A group is too big for one team to migrate at once — splits it along the upstream lineage of its final tables. It caps *tables*, not mappings, so a group can still end up mapping-heavy: a real 121-group Teradata plan had one group with 83 Informatica mappings, which is one review queue. Check group sizes before converting |
 | `--seed <table>` | none, repeatable | You want a split to fall on a boundary you care about; treats the table as an additional final output |
 | `--exclude <table>` | none, repeatable | A table is already migrated or truly retired |
 | `--hub-min-readers <count>` | | A widely-read table should (or shouldn't) be promoted into the shared foundation |
@@ -69,7 +69,7 @@ stat columns, table rows fill the score columns.
 | `--hub-max-tables <tables>` | | Cap on the shared-foundation group |
 | `--jaccard-merge-threshold <0..1>` | | Two final tables with overlapping upstreams should migrate together (1 = identical upstreams only, 0 = merge anything) |
 
-Small estates (under ~50 tables) need the thresholds lowered or everything lands in one group:
+Small migrations (under ~50 tables) need the thresholds lowered or everything lands in one group:
 
 ```bash
 toolkit ds migration-plan <ds> --hub-min-component-size 10 --hub-min-readers 4 --max-group-size 8
@@ -89,7 +89,7 @@ ds {
 ```
 
 Audit-sink name patterns live under `ds.migrationPlan.auditSinks.namePatterns` — worth
-adjusting when an estate's audit tables don't match the default naming.
+adjusting when the audit tables don't match the default naming.
 
 ## Re-cutting
 

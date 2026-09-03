@@ -97,5 +97,8 @@ contract and the report in place. Tooling, target platform, and target columns a
 locked — comments can't change the target schema. Contracts without comments pass through
 unchanged, so sweeping a whole directory is safe.
 
+Command reference: the `discovery` section of `docs/toolkit/agent.adoc`, written into the
+project by `toolkit init`.
+
 Repeat Steps 3–4 until `humanReviewItems` is empty. Then hand off to
 `/toolkit-pipeline:build`.

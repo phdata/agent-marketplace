@@ -55,7 +55,7 @@ its console findings decide whether the corpus is worth planning from:
   be as complete as the corpus, and missing mappings silently shrink the waves.
 - **Orphaned mapping files not referenced by workflows** — mappings nothing schedules. Often
   genuinely dead code worth excluding from the migration, sometimes a sign the workflow XML was
-  left out of the export. Which one it is, is a question for the estate's owners.
+  left out of the export. Which one it is, is a question for the people who own the mappings.
 
 Also worth confirming with whoever exported: whether it covers the **whole** scope or one
 folder of a larger repository, and whether it came from the production repository or a

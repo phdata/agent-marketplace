@@ -40,7 +40,13 @@ Ask for whatever isn't already known:
 
 ## Step 2 — write the config
 
-Read the matching example, `examples/<type>.conf`, in this skill's directory. It is a complete,
+Read the matching example, `examples/<type>.conf`, in this skill's directory.
+
+**Authoritative syntax reference**: `docs/toolkit/data-source.adoc` in the toolkit project
+(written by `toolkit init`) — the *Data Source Configuration* section for the config block, and
+*Filters* → *Glob Filtering* for pattern syntax, including per-datasource notes for Snowflake,
+Oracle, SQL Server and Hive/Impala. Check it rather than guessing when a pattern or property
+isn't behaving. It is a complete,
 copy-pastable `connections` + `ds.datasources` pair with the exact JDBC URL template, required
 `properties`, and the driver jar name for non-bundled types.
 

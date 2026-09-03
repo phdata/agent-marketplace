@@ -93,6 +93,14 @@ This runs `toolkit init` (skipped if `toolkit.conf` already exists) and then
 profile config, type mappings, codegen templates). If the extract step warns about
 authentication, finish Step 3 and re-run `toolkit admin extract ds` from the project directory.
 
+`toolkit init` also writes the full command documentation to `docs/toolkit/*.adoc` in the
+project — `data-source.adoc`, `agent.adoc`, `analyzer.adoc`, `sql.adoc`, `toolkit-cli.adoc` and
+the rest. Point the user at those, and read them yourself, whenever config syntax or a command's
+behavior is unclear; they are the same docs published at https://toolkit.phdata.io/docs but
+available offline and matched to the installed version. One caveat: some per-command synopsis
+blocks are unresolved `include::` directives, so for exact flags `toolkit <command> --help`
+stays authoritative.
+
 ## Step 5 — verify and hand off
 
 Re-run `toolkit-check`:

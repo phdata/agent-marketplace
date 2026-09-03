@@ -43,7 +43,7 @@ cp -R <export-dir>/ informatica-xml/
 Everything downstream then works from one known location: no path to remember between skills,
 and the assessment stays reproducible even if the original export directory moves or is
 reorganized. PowerCenter XML is text — a real exported mapping runs about 25 KB, so even a
-5,000-mapping estate is a couple of hundred megabytes.
+5,000-mapping export is a couple of hundred megabytes.
 
 Preserving the structure matters because the directory holding each file becomes the folder
 segment of its plan process id (`informatica/<folder>/<mapping>`), which is what keeps
@@ -82,7 +82,7 @@ details, and getting any of them wrong fails silently.
 
 
 **Around 20 mappings or fewer, ask the user which route they want** — don't assume. The full
-assessment exists to make a large estate tractable; on a small one it can be more ceremony
+assessment exists to make a large migration tractable; on a small one it can be more ceremony
 than it's worth:
 
 | | Full assessment | Direct conversion |
@@ -90,7 +90,7 @@ than it's worth:
 | Steps | this skill → `:lineage` → `:plan` → `:wave` per group | this skill → `:wave` once |
 | You get | dependency-ordered waves, dead/audit/interface detection, complexity and risk scores, cutover constraints between groups | the converted pipelines, nothing about ordering |
 | Also needs | a legacy datasource (real or stub), and the corpus imported | nothing but the corpus |
-| Worth it when | mappings feed each other, the estate is unfamiliar, or someone needs a migration schedule | the mappings are few and independent enough to hold in your head |
+| Worth it when | mappings feed each other, the mappings are unfamiliar, or someone needs a migration schedule | the mappings are few and independent enough to hold in your head |
 
 Frame it as the tradeoff, not as a size rule: twelve mappings chained four deep still benefit
 from a plan, while thirty independent one-hop loads may not. If they're unsure, the assessment
@@ -121,7 +121,7 @@ Surface to the user:
   as the corpus, and the ones missing shrink the waves silently.
 - **Orphaned mapping files not referenced by workflows** — mappings nothing schedules. Often
   genuinely dead code worth excluding from the migration, sometimes a sign the workflow XML was
-  left out of the export. Which one it is, is a question for the estate's owners.
+  left out of the export. Which one it is, is a question for the people who own the mappings.
 - Estate metrics (workflows/sessions/mappings/transforms/sources/targets) and the complexity
   band, plus `analyzer-out/dependency.txt` — the workflow → session → mapping tree, which is
   the only orchestration record in the whole workflow (`etl-extract` does not capture workflow
@@ -131,11 +131,11 @@ Caveat worth stating once: the analyzer attaches sources and targets per *file*,
 holding several mappings over-reports each one's tables. Trust the plan (Step 5 onward) for
 per-mapping table lists.
 
-## Step 4 — datasource for the legacy estate
+## Step 4 — datasource for the legacy database
 
 The legacy source's SQL dialect must be one of **databricks, mssql, oracle, snowflake,
 teradata** — those are the dialects the collect store can parse. Anything else: stop and
-explain that the estate can't be collected today.
+explain that these mappings can't be collected today.
 
 - **With database access** — configure a real connection with `/toolkit-core:connect`.
 - **Without access** (common) — add a stub whose URL is never dialed. Show the user this and
@@ -195,6 +195,11 @@ The scan lets the planner tell live tables from ones no longer present, and prof
 show up as table sizes in the plan. Note for Teradata: no dedicated scanner, so it falls back
 to generic JDBC metadata — it works, with lower fidelity. The **target warehouse is not
 scanned** in this phase.
+
+Command reference for everything above: `docs/toolkit/data-source.adoc` (`ds collect etl`,
+`ds scan`, datasource config and filters) and `docs/toolkit/analyzer.adoc`, both written into
+the project by `toolkit init`. Prefer them over guessing at syntax; use `--help` for exact
+flags.
 
 Then hand off to `/informatica-etl-conversion:lineage` (full assessment) or
 `/informatica-etl-conversion:wave` (direct conversion).

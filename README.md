@@ -10,7 +10,7 @@ so engineering repos don't each carry their own `.claude/skills/`.
 |---|---|
 | [toolkit-core](toolkit-core/) | Toolkit CLI foundation: install, PATH setup, project init, JDBC connection/datasource configuration. Required by all other toolkit plugins. |
 | [toolkit-pipeline](toolkit-pipeline/) | Dataspec-driven pipeline generation via `toolkit agent discovery` and `toolkit agent pipeline-build`: SQL, dbt, or PySpark transforms plus data-quality tests and a synthetic-data spec. |
-| [informatica-etl-conversion](informatica-etl-conversion/) | Informatica PowerCenter conversion: assess the estate (collect, lineage, `ds migration-plan`) and convert it wave by wave via `agent etl-extract`, discovery with a grouped review queue, and pipeline-build — or convert a small estate in a single pass. |
+| [informatica-etl-conversion](informatica-etl-conversion/) | Informatica PowerCenter conversion: survey the mappings (collect, lineage, `ds migration-plan`) and convert them wave by wave via `agent etl-extract`, discovery with a grouped review queue, and pipeline-build — or convert a handful of mappings in a single pass. |
 
 ## Install — Claude Code
 

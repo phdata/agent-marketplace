@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Run ds migration-plan to decompose the Informatica estate's lineage into ordered, scored migration waves, then walk the waves, groups, and held-out objects with the user and tune until the cut is right. Use when the user wants a migration plan, wave sequencing, or an inventory for an Informatica conversion, or asks to re-cut an existing plan.
+description: Run ds migration-plan to decompose the collected Informatica lineage into ordered, scored migration waves, then walk the waves, groups, and held-out objects with the user and tune until the cut is right. Use when the user wants a migration plan, wave sequencing, or an inventory for an Informatica conversion, or asks to re-cut an existing plan.
 ---
 
 # Plan: lineage → ordered migration waves
@@ -30,8 +30,8 @@ Lineage must exist (`/informatica-etl-conversion:lineage`).
 toolkit ds migration-plan legacy_dw
 ```
 
-For a small estate (under ~50 tables) the defaults — tuned for hundreds of tables — collapse
-everything into one group. Start from the small-estate preset instead:
+For a small migration (under ~50 tables) the defaults — tuned for hundreds of tables — collapse
+everything into one group. Start from the small-migration preset instead:
 
 ```bash
 toolkit ds migration-plan legacy_dw \
@@ -46,7 +46,7 @@ JSON snapshot under `tools/ds/snapshots/migration-plan/`.
 Never parse the command's own output — it truncates long lists. Read the written files:
 
 - **`plan.txt`** is the human rendering and what you walk through with the user. On a large
-  estate, read it in pieces (the summary table first, then the groups being discussed) rather
+  migration, read it in pieces (the summary table first, then the groups being discussed) rather
   than pulling the whole file into context.
 - **The JSON snapshot** is the machine-readable source for counting, filtering, and anything
   the wave and status skills need:
@@ -80,7 +80,7 @@ Walk the user through, in this order:
 ## Step 3 — tune and re-cut
 
 Re-run with adjusted knobs until the user agrees the cut matches how their teams actually
-own the estate. The knob table and when to reach for each is in `references/plan-tuning.md`;
+own the mappings. The knob table and when to reach for each is in `references/plan-tuning.md`;
 the ones that come up most:
 
 - `--max-group-size N` — split groups too big for one team to migrate at once.
@@ -93,6 +93,10 @@ the ones that come up most:
 Each re-run overwrites `plan.txt`/`inventory.csv` and adds a snapshot. Warn the user before
 re-cutting once wave execution has started: group names and wave numbers can change, which
 strands existing `waves/` directories —`/informatica-etl-conversion:status` flags that drift.
+
+Command reference: the `ds migration-plan` sections of `docs/toolkit/data-source.adoc`, written
+into the project by `toolkit init` — worth reading before tuning, since it documents what each
+knob does to the clustering.
 
 Then start execution with `/informatica-etl-conversion:wave`, taking the lowest-numbered wave
 first (its foundation group, if there is one, feeds everything else).

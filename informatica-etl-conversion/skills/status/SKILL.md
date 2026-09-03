@@ -24,7 +24,7 @@ paths into the session at startup. Use that path; if the hook didn't run, the sc
 Check for a plan under `migration-plan/<ds>/`:
 
 - **Plan present** — report against it, as below.
-- **No plan but `waves/all/` exists** — this is a direct conversion (small estate, no plan by
+- **No plan but `waves/all/` exists** — this is a direct conversion (few mappings, no plan by
   choice). Skip Step 1 and report from the artifacts alone, with the corpus mapping count as
   the denominator: `<plugin>/scripts/infa-corpus count`.
 - **Neither** — assessment hasn't gotten anywhere yet; point at

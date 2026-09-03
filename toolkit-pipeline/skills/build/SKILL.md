@@ -114,5 +114,8 @@ assertions?
   `toolkit ds exec <datasource> --file <a test .sql under pipeline-out/<name>/tests/>` — a
   failing test returns rows; empty results mean pass.
 
+Command reference: the `pipeline-build` section of `docs/toolkit/agent.adoc`, written into the
+project by `toolkit init`.
+
 For dbt contracts, the generated project files belong in the user's dbt repo — offer to move
 them and run `dbt parse` if dbt is installed locally.
