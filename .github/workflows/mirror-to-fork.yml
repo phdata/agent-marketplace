@@ -43,8 +43,17 @@ jobs:
           git remote add mirror \
             "https://x-access-token:${MIRROR_TOKEN}@github.com/phdata/agent-marketplace-fork.git"
 
-          # Only advance the mirror's main from a branch build. On a tag event HEAD is the
-          # tagged commit, which may be older than main — pushing it would rewind the mirror.
+          # Only main is mirrored. Two ways a non-main ref reaches this step: a tag build,
+          # and workflow_dispatch, which lets the operator pick any ref in the UI. Neither may
+          # move the mirror's main — on a tag build HEAD is the tagged commit (older than main
+          # when a release is tagged retroactively), and on a dispatch from a feature branch
+          # HEAD is that branch's tip. Either would publish the wrong tree as main.
+          if [ "${GITHUB_REF_TYPE}" = "branch" ] && [ "${GITHUB_REF_NAME}" != "main" ]; then
+            echo "::error::Refusing to mirror from branch '${GITHUB_REF_NAME}' — only main is" \
+                 "mirrored. Re-run this workflow from main."
+            exit 1
+          fi
+
           if [ "${GITHUB_REF_TYPE}" = "branch" ]; then
             # Force so the mirror tracks this repo exactly. A non-fast-forward here means
             # someone committed directly to the mirror; that work is intentionally discarded,
