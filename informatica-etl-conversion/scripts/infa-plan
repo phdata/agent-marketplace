@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+#
+# infa-plan — read the migration plan produced by 'toolkit ds migration-plan'.
+#
+# Usage:
+#   infa-plan groups <datasource>                     TSV: wave, group, mappings, tables
+#   infa-plan processes <datasource> <wave> <group>   mapping names in that group, one per line
+#   infa-plan wave-id <wave> <group>                  wave directory name for that group
+#   infa-plan snapshot <datasource>                   path to the latest plan snapshot
+#
+# Reads <project>/tools/ds/snapshots/migration-plan/<timestamp>_<datasource>.json directly.
+# 'toolkit ds show <ds>:migration-plan:latest' cannot be used: it fails to deserialize any plan
+# containing Informatica processes ('Unrecognized field "componentCount"'), in every format.
+#
+# Two shapes in that snapshot bite when queried by hand, so they are handled here once:
+#   - a group's 'processes' and 'tables' keys may be absent entirely -> (.x // [])
+#   - wave numbers do not necessarily start at 0
+#
+# Process ids are 'informatica/<folder>/<mapping>'; 'processes' prints the mapping name only
+# (the last segment), which is what infa-corpus find takes.
+#
+# Exit codes: 0 success, 2 usage error, 3 no snapshot found, 5 jq missing.
+
+set -u
+
+usage() {
+    cat >&2 <<'EOF'
+usage: infa-plan groups <datasource>
+       infa-plan processes <datasource> <wave> <group>
+       infa-plan wave-id <wave> <group>
+       infa-plan snapshot <datasource>
+EOF
+    exit 2
+}
+
+need_jq() {
+    command -v jq >/dev/null 2>&1 || { echo "infa-plan: jq is required but not on PATH" >&2; exit 5; }
+}
+
+latest_snapshot() {
+    # Snapshots live under the toolkit project. Honor TOOLKIT_PROJECT_HOME the way the
+    # toolkit itself does; otherwise assume the project is the current directory.
+    local ds="$1" base="${TOOLKIT_PROJECT_HOME:-.}" dir snap
+    dir="${base%/}/tools/ds/snapshots/migration-plan"
+    snap="$(ls -1 "$dir"/*_"${ds}".json 2>/dev/null | sort | tail -1)"
+    if [[ -z "$snap" ]]; then
+        echo "infa-plan: no migration-plan snapshot for datasource '$ds' under $dir" >&2
+        echo "hint: run 'toolkit ds migration-plan $ds' first, from the toolkit project directory" >&2
+        exit 3
+    fi
+    printf '%s\n' "$snap"
+}
+
+# Directory-safe form of a plan group name. printf, not echo: a trailing newline would
+# become a trailing underscore. Plan groups really are named things like '(default)'.
+sanitize() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_'; }
+
+cmd="${1:-}"
+case "$cmd" in
+    snapshot)
+        [[ $# -eq 2 ]] || usage
+        latest_snapshot "$2"
+        ;;
+    groups)
+        [[ $# -eq 2 ]] || usage
+        need_jq
+        jq -r '.waves[] | .number as $w | .groups[]
+               | [$w, .name,
+                  ((.processes // []) | map(select(.kind == "INFORMATICA_MAPPING")) | length),
+                  ((.tables // []) | length)] | @tsv' "$(latest_snapshot "$2")"
+        ;;
+    processes)
+        [[ $# -eq 4 ]] || usage
+        need_jq
+        jq -r --argjson w "$3" --arg g "$4" \
+           '.waves[] | select(.number == $w) | .groups[] | select(.name == $g)
+            | (.processes // [])[] | select(.kind == "INFORMATICA_MAPPING")
+            | .id | split("/") | last' "$(latest_snapshot "$2")"
+        ;;
+    wave-id)
+        [[ $# -eq 3 ]] || usage
+        printf 'w%s-%s\n' "$2" "$(sanitize "$3")"
+        ;;
+    ""|-h|--help) usage ;;
+    *) echo "infa-plan: unknown command '$cmd'" >&2; usage ;;
+esac

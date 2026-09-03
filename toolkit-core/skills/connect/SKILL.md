@@ -5,6 +5,10 @@ description: Add or verify a JDBC connection and datasource in toolkit.conf for 
 
 # Connect a datasource
 
+> `toolkit-check` and `toolkit-setup` below are scripts bundled with this plugin, **not**
+> commands on PATH. Invoke them by the absolute paths the SessionStart hook prints at
+> session start (`<plugin>/scripts/…`); `CLAUDE_PLUGIN_ROOT` is not set for Bash.
+
 Goal: a named connection + datasource in the project's `toolkit.conf` that a scoped
 `toolkit ds scan` can use successfully.
 
@@ -26,14 +30,23 @@ Ask for whatever isn't already known:
 3. **Endpoint**: host/account, port, database (type-specific — the example file shows exactly
    what's needed).
 4. **Auth method**: keypair/password/OAuth/IAM, depending on type.
-5. **Scope** (optional): which databases/schemas this work touches. On large or shared
-   warehouses, a `filters { patterns = [ "DB.SCHEMA.*" ] }` block keeps scans fast and quiet,
-   and every downstream toolkit command reuses it. Skip it to cover everything the connection
-   can see.
+5. **Scope**: which databases and schemas this work touches. Ask for them and write a
+   `filters { patterns = [ "DB.SCHEMA.*" ] }` block — treat it as part of configuring the
+   datasource, not an optional extra. Every downstream command reuses it, and the ones that
+   scan and profile live on each run (`ds scan`, `ds profile`, `agent discovery`) get slower,
+   noisier, and more expensive without it. Patterns are globs matched as `db.schema.table`,
+   OR'd together, with a `!` prefix to exclude. Leave filters out only when the user genuinely
+   wants everything the connection can see, and say that's what you're doing.
 
 ## Step 2 — write the config
 
-Read the matching example, `examples/<type>.conf`, in this skill's directory. It is a complete,
+Read the matching example, `examples/<type>.conf`, in this skill's directory.
+
+**Authoritative syntax reference**: `docs/toolkit/data-source.adoc` in the toolkit project
+(written by `toolkit init`) — the *Data Source Configuration* section for the config block, and
+*Filters* → *Glob Filtering* for pattern syntax, including per-datasource notes for Snowflake,
+Oracle, SQL Server and Hive/Impala. Check it rather than guessing when a pattern or property
+isn't behaving. It is a complete,
 copy-pastable `connections` + `ds.datasources` pair with the exact JDBC URL template, required
 `properties`, and the driver jar name for non-bundled types.
 
@@ -56,8 +69,8 @@ ds {
   datasources {
     my_source {
       connection = ${connections.my_source}
-      // Optional: scope scans to specific databases/schemas
-      // filters { patterns = [ "MY_DB.MY_SCHEMA.*" ] }
+      // Scope every scan, profile and discovery run to what this work touches
+      filters { patterns = [ "MY_DB.MY_SCHEMA.*" ] }
     }
   }
 }

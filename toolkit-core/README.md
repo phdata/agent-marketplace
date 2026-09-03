@@ -14,7 +14,17 @@ declare a dependency on it and preflight with one command.
 | `/toolkit-core:llm` | Configure the optional `llmClient` block (Bedrock/OpenAI/Anthropic) for `toolkit agent *` commands |
 | `/toolkit-core:status` | Doctor-style report of the current toolkit state |
 
-## Bash commands (on PATH while the plugin is enabled)
+## Bundled scripts
+
+Both live in `scripts/` and are invoked by absolute path — **not** added to PATH. Plugins
+distributed through claude.ai organization settings may not ship a top-level `bin/`, and
+`CLAUDE_PLUGIN_ROOT` is only set for hook commands, never for the Bash tool. The SessionStart
+hook therefore prints their absolute paths into every session, and the skills use those:
+
+```
+phData toolkit-core scripts (not on PATH -- invoke by absolute path):
+  /…/toolkit-core/scripts/toolkit-check, /…/toolkit-core/scripts/toolkit-setup
+```
 
 ### `toolkit-check`
 
@@ -72,8 +82,9 @@ never runs `toolkit auth` (credentials are the user's to enter).
 
 ## Hook
 
-A `SessionStart` hook runs `toolkit-check --hook`: silent when the toolkit is present, injects a
-short advisory into context when it's missing, and always exits 0 — it never blocks a session.
+A `SessionStart` hook runs `scripts/toolkit-check --hook`. It always prints the absolute paths of
+the bundled scripts (that line is how skills locate them), adds a short advisory when the toolkit
+binary is missing, and always exits 0 — it never blocks a session.
 
 ## Prerequisites
 

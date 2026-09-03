@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+#
+# infa-corpus — read an Informatica PowerCenter export corpus.
+#
+# Usage:
+#   infa-corpus count [corpus-dir]              number of mappings in the corpus
+#   infa-corpus list [corpus-dir]               every mapping name, one per line
+#   infa-corpus find <mapping> [corpus-dir]     files containing that mapping, one per line
+#
+# corpus-dir defaults to ./informatica-xml
+#
+# Why this exists: the matching regex is subtle in three ways that are easy to get wrong
+# when retyped, and getting them wrong fails silently.
+#   - the space after <MAPPING excludes <MAPPINGVARIABLE NAME="...">, which would otherwise
+#     inflate counts and match variables that share a mapping's name
+#   - '?' around '=' covers both NAME="x" (common) and NAME ="x" (Repository Manager)
+#   - matching '<MAPPING' rather than bare NAME= avoids a workflow's MAPPINGNAME ="x"
+#     session attribute, which would return every workflow that schedules the mapping
+# Case-insensitive throughout: exports use both .xml and .XML.
+#
+# Exit codes: 0 success, 2 usage error, 3 corpus directory not found, 4 no match.
+
+set -u
+
+DEFAULT_CORPUS="informatica-xml"
+
+usage() {
+    cat >&2 <<'EOF'
+usage: infa-corpus count [corpus-dir]
+       infa-corpus list  [corpus-dir]
+       infa-corpus find <mapping> [corpus-dir]
+EOF
+    exit 2
+}
+
+require_dir() {
+    if [[ ! -d "$1" ]]; then
+        echo "infa-corpus: corpus directory not found: $1" >&2
+        echo "hint: pass the directory explicitly, or run from the toolkit project holding ${DEFAULT_CORPUS}/" >&2
+        exit 3
+    fi
+}
+
+# Every <MAPPING ... NAME="..."> attribute in the corpus, as bare mapping names.
+mapping_names() {
+    grep -rhoE '<MAPPING [^>]*NAME ?= ?"[^"]+"' "$1" 2>/dev/null \
+        | grep -oE 'NAME ?= ?"[^"]+"' \
+        | sed -E 's/^NAME ?= ?"//; s/"$//'
+}
+
+cmd="${1:-}"
+case "$cmd" in
+    count)
+        corpus="${2:-$DEFAULT_CORPUS}"
+        require_dir "$corpus"
+        mapping_names "$corpus" | wc -l | tr -d ' '
+        ;;
+    list)
+        corpus="${2:-$DEFAULT_CORPUS}"
+        require_dir "$corpus"
+        mapping_names "$corpus" | sort
+        ;;
+    find)
+        mapping="${2:-}"
+        [[ -n "$mapping" ]] || usage
+        corpus="${3:-$DEFAULT_CORPUS}"
+        require_dir "$corpus"
+        # Escape regex metacharacters in the mapping name so a literal name matches literally.
+        escaped="$(printf '%s' "$mapping" | sed -E 's/[][\.^$*+?(){}|\\]/\\&/g')"
+        matches="$(grep -rilE "<MAPPING [^>]*NAME ?= ?\"${escaped}\"" "$corpus" 2>/dev/null || true)"
+        if [[ -z "$matches" ]]; then
+            echo "infa-corpus: no file in $corpus contains mapping '$mapping'" >&2
+            exit 4
+        fi
+        printf '%s\n' "$matches"
+        ;;
+    ""|-h|--help) usage ;;
+    *) echo "infa-corpus: unknown command '$cmd'" >&2; usage ;;
+esac

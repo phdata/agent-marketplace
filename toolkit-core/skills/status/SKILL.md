@@ -5,11 +5,15 @@ description: Show a doctor-style report of the phData Toolkit CLI installation â
 
 # Toolkit status
 
+> `toolkit-check` and `toolkit-setup` below are scripts bundled with this plugin, **not**
+> commands on PATH. Invoke them by the absolute paths the SessionStart hook prints at
+> session start (`<plugin>/scripts/â€¦`); `CLAUDE_PLUGIN_ROOT` is not set for Bash.
+
 Run both helpers and render one readable report:
 
 ```bash
-toolkit-check            # layered checks: binary -> project -> datasource
-toolkit-setup detect     # raw facts: os, java, install path, project, datasources
+"$TOOLKIT_CHECK"            # layered checks: binary -> project -> datasource
+"$TOOLKIT_SETUP" detect     # raw facts: os, java, install path, project, datasources
 ```
 
 Present a short table: binary (path + version), Java, project (`toolkit.conf` path), datasources
@@ -21,7 +25,7 @@ If the user wants connectivity verified too (this touches the network and connec
 datasource), add:
 
 ```bash
-toolkit-check --level connect --datasource <name>
+"$TOOLKIT_CHECK" --level connect --datasource <name>
 ```
 
 End with the recommended next step:
