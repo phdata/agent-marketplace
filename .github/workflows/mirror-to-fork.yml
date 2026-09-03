@@ -22,7 +22,7 @@ jobs:
     if: github.repository == 'phdata/agent-marketplace'
     steps:
       - name: Check out full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0    # the mirror needs full history, not a shallow clone
           persist-credentials: false
@@ -33,7 +33,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.MIRROR_APP_ID }}
+          client-id: ${{ vars.MIRROR_CLIENT_ID }}
           private-key: ${{ secrets.MIRROR_APP_PRIVATE_KEY }}
           repositories: agent-marketplace-fork
 
