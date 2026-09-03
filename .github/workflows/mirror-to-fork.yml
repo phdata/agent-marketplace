@@ -1,0 +1,61 @@
+# Mirror this repository's main branch and release tags to agent-marketplace-fork.
+#
+# The "fork" is not a GitHub fork — it is an independent internal repository that is
+# kept as a mirror of this one, and it is what the claude.ai plugin marketplace syncs
+# from. Without this workflow the two drift, and the marketplace serves stale plugins.
+name: Mirror to fork
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  workflow_dispatch:        # manual re-sync, e.g. after fixing a failed run
+
+# Never let two mirror runs race: a later push must not land before an earlier one.
+concurrency:
+  group: mirror-to-fork
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    # Don't run from forks of this repo, which have no access to the secret.
+    if: github.repository == 'phdata/agent-marketplace'
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # mirroring needs every commit and tag, not a shallow clone
+          persist-credentials: false
+
+      - name: Push main and tags to the mirror
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${MIRROR_TOKEN}" ]; then
+            echo "::error::MIRROR_TOKEN is not set. Add a token with write access to" \
+                 "phdata/agent-marketplace-fork as a repository secret named MIRROR_TOKEN."
+            exit 1
+          fi
+
+          git remote add mirror \
+            "https://x-access-token:${MIRROR_TOKEN}@github.com/phdata/agent-marketplace-fork.git"
+
+          # Only advance the mirror's main from a branch build. On a tag event HEAD is the
+          # tagged commit, which may be older than main — pushing it would rewind the mirror.
+          if [ "${GITHUB_REF_TYPE}" = "branch" ]; then
+            # Force so the mirror tracks this repo exactly. A non-fast-forward here means
+            # someone committed directly to the mirror; that work is intentionally discarded,
+            # because the mirror is a copy and this repository is the source of truth.
+            git push --force mirror "HEAD:refs/heads/main"
+            echo "Mirrored main at $(git rev-parse --short HEAD)"
+          else
+            echo "Tag build (${GITHUB_REF_NAME}) — leaving the mirror's main untouched"
+          fi
+
+          # Release tags (<plugin>--v<version>) drive versioned plugin installs, so the
+          # mirror needs them too. --force updates a tag that was moved deliberately.
+          git push --force --tags mirror
+          echo "Mirrored tags to phdata/agent-marketplace-fork"
