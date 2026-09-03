@@ -12,6 +12,11 @@
       "name": "toolkit-pipeline",
       "source": "./toolkit-pipeline",
       "description": "Dataspec-driven pipeline generation via toolkit agent discovery and pipeline-build: SQL, dbt, or PySpark transforms plus tests and a datagen spec"
+    },
+    {
+      "name": "informatica-etl-conversion",
+      "source": "./informatica-etl-conversion",
+      "description": "Informatica PowerCenter conversion: assess the estate (collect, lineage, migration-plan) and convert it wave by wave via agent etl-extract, discovery with a grouped review queue, and pipeline-build — or convert a small estate in a single pass"
     }
   ]
 }

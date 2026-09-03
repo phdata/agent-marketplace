@@ -5,6 +5,10 @@ description: Configure the optional llmClient block in toolkit.conf so toolkit a
 
 # Configure the toolkit LLM client (optional)
 
+> `toolkit-check` and `toolkit-setup` below are scripts bundled with this plugin, **not**
+> commands on PATH. Invoke them by the absolute paths the SessionStart hook prints at
+> session start (`<plugin>/scripts/…`); `CLAUDE_PLUGIN_ROOT` is not set for Bash.
+
 `toolkit agent *` commands (and `toolkit codegen ask/prompt`) call an LLM, configured by a
 top-level `llmClient` block in `toolkit.conf` — a peer of `connections` and `ds`.
 

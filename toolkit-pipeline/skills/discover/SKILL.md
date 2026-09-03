@@ -13,8 +13,14 @@ below resolves them.
 ## Step 0 — preflight
 
 ```bash
-toolkit-check || exit
+TOOLKIT_CHECK="<absolute path from the toolkit-core SessionStart hook>"
+"$TOOLKIT_CHECK" || exit
 ```
+
+toolkit-core's scripts are not on PATH (plugin `bin/` directories aren't permitted, and
+`CLAUDE_PLUGIN_ROOT` isn't set for Bash) — its SessionStart hook prints their absolute
+paths into the session at startup. Use that path; if the hook didn't run, the script is
+`scripts/toolkit-check` in the installed toolkit-core plugin directory.
 
 On failure surface the `hint:` line and stop (`/toolkit-core:setup` / `/toolkit-core:connect`).
 If it prints a `note:` about the project directory, run every `toolkit` command below from that

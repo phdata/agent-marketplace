@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/toolkit-check\" --hook"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/toolkit-check\" --hook"
           }
         ]
       }

@@ -159,6 +159,18 @@ list_datasources() {
 
 # ---------- hook mode: fast, silent on success, never blocks ----------
 if [[ $HOOK -eq 1 ]]; then
+    # Announce where these scripts live. Plugin scripts are NOT on PATH and
+    # CLAUDE_PLUGIN_ROOT is not exported into the Bash tool environment, so this
+    # line is how skills -- in this plugin and in dependent plugins -- learn the
+    # absolute path to invoke. Hook commands are the one context where
+    # CLAUDE_PLUGIN_ROOT resolves; fall back to this script's own location.
+    if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+        scripts_dir="${CLAUDE_PLUGIN_ROOT%/}/scripts"
+    else
+        scripts_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+    fi
+    echo "phData toolkit-core scripts (not on PATH -- invoke by absolute path): ${scripts_dir}/toolkit-check, ${scripts_dir}/toolkit-setup"
+
     if command -v toolkit >/dev/null 2>&1; then
         exit 0
     fi

@@ -5,6 +5,10 @@ description: Install and configure the phData Toolkit CLI end to end — verify 
 
 # Toolkit CLI setup
 
+> `toolkit-check` and `toolkit-setup` below are scripts bundled with this plugin, **not**
+> commands on PATH. Invoke them by the absolute paths the SessionStart hook prints at
+> session start (`<plugin>/scripts/…`); `CLAUDE_PLUGIN_ROOT` is not set for Bash.
+
 Goal: a working `toolkit` command on PATH, an authenticated CLI, and an initialized toolkit
 project. Two helper commands from this plugin are available in Bash while it is enabled:
 `toolkit-check` (layered preflight; see exit codes below) and `toolkit-setup`
@@ -81,7 +85,7 @@ A toolkit project is a directory with a `toolkit.conf`. Confirm the target direc
 user (usually the repo or working directory they'll run migrations from), then:
 
 ```bash
-toolkit-setup project <dir>
+"$TOOLKIT_SETUP" project <dir>
 ```
 
 This runs `toolkit init` (skipped if `toolkit.conf` already exists) and then
