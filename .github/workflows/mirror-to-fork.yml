@@ -27,20 +27,24 @@ jobs:
           fetch-depth: 0    # the mirror needs full history, not a shallow clone
           persist-credentials: false
 
+      # A GitHub App installation token, scoped to the mirror alone and minted per run.
+      # Nothing long-lived is stored, and it is not tied to a person's account.
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.MIRROR_APP_ID }}
+          private-key: ${{ secrets.MIRROR_APP_PRIVATE_KEY }}
+          repositories: agent-marketplace-fork
+
       - name: Push main to the mirror
         env:
-          # gh reads GH_TOKEN directly, and trims it — which also removes the class of
-          # failure that broke the first run, where a token with stray whitespace was
-          # interpolated into a URL and curl rejected the malformed hostname.
-          GH_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+          # gh reads GH_TOKEN directly. Keeping the credential out of the remote URL avoids
+          # the failure that broke the first run, where a malformed URL was rejected by curl
+          # before any request went out — and printed part of the credential into the log.
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-
-          if [ -z "${GH_TOKEN}" ]; then
-            echo "::error::MIRROR_TOKEN is not set. Add a token with write access to" \
-                 "phdata/agent-marketplace-fork as a repository secret named MIRROR_TOKEN."
-            exit 1
-          fi
 
           # Only main is mirrored, and only main's own content. The push trigger already
           # limits this to main, but workflow_dispatch lets the operator pick any ref in the
