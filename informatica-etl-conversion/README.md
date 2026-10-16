@@ -17,7 +17,7 @@ a directory of exported PowerCenter XML  →  copied in as informatica-xml/
 toolkit ds lineage <legacy-ds>
    │   /informatica-etl-conversion:lineage — parse-failure triage, spot checks
    ▼
-toolkit ds migration-plan <legacy-ds>
+toolkit migration plan <legacy-ds>
    │   /informatica-etl-conversion:plan — waves, groups, held-out objects, tuning loop
    ▼
 migration-plan/<ds>/plan.txt + inventory.csv        (the plan of record)
@@ -47,7 +47,7 @@ waves/w<N>-<group>/wave-report.md            /informatica-etl-conversion:status
 |---|---|
 | `/informatica-etl-conversion:collect` | Copy in the corpus, size it, pick a route; analyzer reconnaissance; `ds collect etl`; optional legacy source-DB scan |
 | `/informatica-etl-conversion:lineage` | Extract lineage, triage SQL parse failures, spot-check dataflows |
-| `/informatica-etl-conversion:plan` | Cut and tune the wave plan with `ds migration-plan` |
+| `/informatica-etl-conversion:plan` | Cut and tune the wave plan with `migration plan` |
 | `/informatica-etl-conversion:wave` | Convert one plan group end to end — or the whole corpus in direct mode — with the grouped review queue |
 | `/informatica-etl-conversion:status` | Progress across the whole conversion, and what to run next |
 

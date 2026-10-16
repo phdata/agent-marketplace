@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# infa-plan — read the migration plan produced by 'toolkit ds migration-plan'.
+# infa-plan — read the migration plan produced by 'toolkit migration plan'.
 #
 # Usage:
 #   infa-plan groups <datasource>                     TSV: wave, group, mappings, tables
@@ -8,7 +8,7 @@
 #   infa-plan wave-id <wave> <group>                  wave directory name for that group
 #   infa-plan snapshot <datasource>                   path to the latest plan snapshot
 #
-# Reads <project>/tools/ds/snapshots/migration-plan/<timestamp>_<datasource>.json directly.
+# Reads <project>/tools/migration/snapshots/migration-plan/<timestamp>_<datasource>.json directly.
 # 'toolkit ds show <ds>:migration-plan:latest' cannot be used: it fails to deserialize any plan
 # containing Informatica processes ('Unrecognized field "componentCount"'), in every format.
 #
@@ -41,11 +41,11 @@ latest_snapshot() {
     # Snapshots live under the toolkit project. Honor TOOLKIT_PROJECT_HOME the way the
     # toolkit itself does; otherwise assume the project is the current directory.
     local ds="$1" base="${TOOLKIT_PROJECT_HOME:-.}" dir snap
-    dir="${base%/}/tools/ds/snapshots/migration-plan"
+    dir="${base%/}/tools/migration/snapshots/migration-plan"
     snap="$(ls -1 "$dir"/*_"${ds}".json 2>/dev/null | sort | tail -1)"
     if [[ -z "$snap" ]]; then
         echo "infa-plan: no migration-plan snapshot for datasource '$ds' under $dir" >&2
-        echo "hint: run 'toolkit ds migration-plan $ds' first, from the toolkit project directory" >&2
+        echo "hint: run 'toolkit migration plan $ds' first, from the toolkit project directory" >&2
         exit 3
     fi
     printf '%s\n' "$snap"

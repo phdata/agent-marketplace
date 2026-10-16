@@ -5,7 +5,7 @@ description: Extract table lineage from the collected Informatica corpus with ds
 
 # Lineage: collected mappings → dataflow graph
 
-Turns the imported corpus into the table-level graph that `ds migration-plan` decomposes into
+Turns the imported corpus into the table-level graph that `migration plan` decomposes into
 waves. Free path — no LLM, no agent license.
 
 ## Step 0 — preflight

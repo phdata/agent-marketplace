@@ -6,14 +6,14 @@
 |---|---|
 | `migration-plan/<ds>/plan.txt` | Human rendering — the file to read with the user |
 | `migration-plan/<ds>/inventory.csv` | One row per object; for spreadsheets and stakeholder hand-offs |
-| `tools/ds/snapshots/migration-plan/<ts>_<ds>.json` | Structured snapshot — the machine-readable source |
+| `tools/migration/snapshots/migration-plan/<ts>_<ds>.json` | Structured snapshot — the machine-readable source |
 
-`toolkit ds show <ds>:migration-plan:latest` currently **fails** on plans containing
+`toolkit migration show <ds>:migration-plan:latest` currently **fails** on plans containing
 Informatica processes (`Unrecognized field "componentCount"`, all formats), so read the
 snapshot JSON straight off disk:
 
 ```bash
-SNAP=$(ls -1 tools/ds/snapshots/migration-plan/*_<ds>.json | sort | tail -1)
+SNAP=$(ls -1 tools/migration/snapshots/migration-plan/*_<ds>.json | sort | tail -1)
 ```
 
 Snapshot shape:
@@ -72,7 +72,7 @@ stat columns, table rows fill the score columns.
 Small migrations (under ~50 tables) need the thresholds lowered or everything lands in one group:
 
 ```bash
-toolkit ds migration-plan <ds> --hub-min-component-size 10 --hub-min-readers 4 --max-group-size 8
+toolkit migration plan <ds> --hub-min-component-size 10 --hub-min-readers 4 --max-group-size 8
 ```
 
 Persistent settings can live in `toolkit.conf` instead of flags, e.g. keeping a shared upstream
