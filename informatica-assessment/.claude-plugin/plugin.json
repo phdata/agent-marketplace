@@ -1,0 +1,9 @@
+{
+  "name": "informatica-assessment",
+  "description": "Assess an Informatica PowerCenter estate before converting it: check an XML export for completeness with toolkit analyzer scan, import it with ds collect etl, build table-level lineage with ds lineage, then decompose the estate into dependency-ordered, scored migration waves with ds migration-plan — a plan of record with an inventory, cutover constraints, and dead, audit, and interface objects called out. Runs entirely offline against a stub datasource if the legacy database is unavailable, and needs no LLM and no agent license.",
+  "version": "0.1.0",
+  "author": { "name": "phData" },
+  "dependencies": [
+    { "name": "toolkit-core", "version": "^0.2" }
+  ]
+}

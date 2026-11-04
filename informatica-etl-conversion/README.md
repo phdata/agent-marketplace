@@ -1,35 +1,16 @@
 # informatica-etl-conversion
 
 Convert a set of Informatica PowerCenter mappings into Snowflake or Databricks pipelines with
-the [phData Toolkit](https://toolkit.phdata.io/docs) CLI — a large migration wave by wave, a
-small one in a single pass.
+the [phData Toolkit](https://toolkit.phdata.io/docs) CLI — one migration-plan group at a time
+for a large estate, or the whole corpus in a single pass for a small one.
 
-`:collect` sizes the corpus and asks which route to take when it's small (around 20 mappings
-or fewer): the full assessment below, or a direct conversion that skips straight to `:wave`.
-
-## Phase A — assess (free path: no LLM, no agent license)
-
-```
-a directory of exported PowerCenter XML  →  copied in as informatica-xml/
-   │   /informatica-etl-conversion:collect — analyzer recon, ds collect etl,
-   │   optional legacy source-database scan
-   ▼
-toolkit ds lineage <legacy-ds>
-   │   /informatica-etl-conversion:lineage — parse-failure triage, spot checks
-   ▼
-toolkit ds migration-plan <legacy-ds>
-   │   /informatica-etl-conversion:plan — waves, groups, held-out objects, tuning loop
-   ▼
-migration-plan/<ds>/plan.txt + inventory.csv        (the plan of record)
-```
-
-The legacy datasource is never connected to unless the user has access and wants a scan — a
-stub connection whose JDBC scheme only sets the SQL dialect is enough for the assessment.
-
-## Phase B — convert, one plan group at a time
+Assessing the estate first — lineage, dependency-ordered waves, an inventory — is the separate
+[informatica-assessment](../informatica-assessment/) plugin. This plugin reads its
+`migration-plan/<ds>/` output off disk if it's there and needs nothing else from it: **direct
+mode is a complete path on its own.**
 
 ```
-plan group ──► staged XML subset ──► toolkit agent etl-extract      (dry-run cost gate)
+plan group (optional) ──► staged XML subset ──► toolkit agent etl-extract   (dry-run cost gate)
    ▼
 one dataspec per (mapping, target) ──► toolkit agent discovery <target-ds> per spec
    ▼
@@ -41,18 +22,21 @@ toolkit agent pipeline-build per approved contract
 waves/w<N>-<group>/wave-report.md            /informatica-etl-conversion:status
 ```
 
+Planned mode converts one plan group per run; a wave is its groups in sequence. Groups within a
+wave are independent by construction, which also makes one group the right size for a single
+review queue. Direct mode converts everything in `informatica-xml/` in one run into
+`waves/all/`, and leaves deployment sequencing as someone's manual problem — the thing the
+assessment would have answered.
+
 ## Skills
 
 | Skill | Purpose |
 |---|---|
-| `/informatica-etl-conversion:collect` | Copy in the corpus, size it, pick a route; analyzer reconnaissance; `ds collect etl`; optional legacy source-DB scan |
-| `/informatica-etl-conversion:lineage` | Extract lineage, triage SQL parse failures, spot-check dataflows |
-| `/informatica-etl-conversion:plan` | Cut and tune the wave plan with `ds migration-plan` |
 | `/informatica-etl-conversion:wave` | Convert one plan group end to end — or the whole corpus in direct mode — with the grouped review queue |
 | `/informatica-etl-conversion:status` | Progress across the whole conversion, and what to run next |
 
-What a usable corpus looks like, the plan-tuning knobs, and the wave runbook live in
-[references/](references/).
+The wave runbook — directory layout, mapping-to-file matching, multi-mapping files, the review
+queue's tags, resume and redo — is in [references/](references/).
 
 ## Bundled scripts
 
@@ -62,49 +46,56 @@ the Bash tool.
 
 | Command | Purpose |
 |---|---|
-| `infa-corpus count \| list [corpus-dir]` | Mappings in the export corpus (default `./informatica-xml`) |
-| `infa-corpus find <mapping> [corpus-dir]` | Which XML file(s) contain a mapping |
-| `infa-plan groups <ds>` | TSV of wave, group, Informatica mappings, tables |
-| `infa-plan processes <ds> <wave> <group>` | Mapping names in one plan group |
-| `infa-plan wave-id <wave> <group>` | Directory-safe name for a group's wave directory |
-| `infa-plan snapshot <ds>` | Path to the newest migration-plan snapshot |
+| `infa_corpus.py count \| list [corpus-dir]` | Mappings in the export corpus (default `./informatica-xml`) |
+| `infa_corpus.py find <mapping> [corpus-dir]` | Which XML file(s) contain a mapping |
+| `infa_plan.py groups <ds>` | TSV of wave, group, Informatica mappings, tables |
+| `infa_plan.py processes <ds> <wave> <group>` | Mapping names in one plan group |
+| `infa_plan.py wave-id <wave> <group>` | Directory-safe name for a group's wave directory |
+| `infa_plan.py snapshot <ds>` | Path to the newest migration-plan snapshot |
+| `infa_plan.py summary <ds>` | The plan's summary block (wave/group/table counts) |
+| `review_queue.py list \| show \| comment \| status --dir <wave>/discovery-out` | The wave's human-review items collapsed into distinct questions, and one decision written across a whole group |
 
-They exist because both patterns are subtle and fail silently when retyped: the mapping regex
-must keep the space after `<MAPPING` (or `<MAPPINGVARIABLE` matches), tolerate `NAME ="x"`
-spacing, and anchor on the element rather than a bare `NAME=` (or every workflow scheduling the
-mapping matches). The plan snapshot must survive absent `processes`/`tables` keys and wave
-numbering that may or may not start at 0. `infa-plan` reads the snapshot JSON directly because
-`toolkit ds show` cannot deserialize a plan containing Informatica processes.
+Run them with whichever Python 3 is on PATH — `python3` on macOS and Linux, `python` or `py` on
+Windows. **Standard library only: no jq, no grep, no packages**, so the skills behave the same on
+every platform. `review_queue.py` is shared with toolkit-pipeline, whose `discover` skill runs
+the same review loop for a plain dataspec run.
+
+The `infa_*` scripts exist because both patterns are subtle and fail silently when retyped. The
+mapping regex must require whitespace after `<MAPPING` (or `<MAPPINGVARIABLE` matches), tolerate
+`NAME ="x"` spacing, and anchor on the element rather than a bare `NAME=` (or every workflow
+scheduling the mapping matches). The plan snapshot must survive absent `processes`/`tables` keys,
+wave numbering that may or may not start at 0, and groups holding SQL scripts or no processes at
+all. `infa_plan.py` reads the snapshot JSON off disk because `toolkit ds show` cannot deserialize
+a plan containing Informatica processes.
+
+informatica-assessment ships the same two scripts, so either plugin stands alone.
 
 ## Prerequisites
 
 - **toolkit-core** and **toolkit-pipeline** (installed automatically as dependencies): the
   toolkit binary, a project, and configured datasources. Skills preflight with `toolkit-check`.
-- **Legacy source dialect** must be one of oracle, mssql, teradata, snowflake, databricks — the
-  dialects the collect store parses. Database access is optional; a stub connection assesses an
-  legacy database offline.
+- **The corpus** in `informatica-xml/`, structure as exported. `:wave` copies it in if the
+  assessment plugin hasn't already.
 - **Target platform**: Snowflake or Databricks, with the mappings' source data already landed
-  there — that's what discovery validates against.
+  there — that's what discovery validates against. The target datasource is a *different* one
+  from the legacy datasource used for assessment, and wants a scoped `filters` block.
 - **dbt or PySpark tooling**, if the wave emits either: `pipeline-build` executes the generated
   code, so `dbt` (with a matching `profiles.yml`) or `databricks-connect` must be on the PATH of
   the shell running `toolkit` — an activated virtualenv, not just an installed package. Without
   it the build silently skips execution and the judge loop never runs. `sql` tooling needs
   nothing extra.
-- **LLM access + license** for Phase B only. `toolkit agent *` commands call an LLM (Bedrock
-  fallback via phData auth, or configure a provider with `/toolkit-core:llm`) and are
-  license-gated. All of Phase A and `status` run without either.
+- **LLM access + license.** `toolkit agent *` commands call an LLM (Bedrock fallback via phData
+  auth, or configure a provider with `/toolkit-core:llm`) and are license-gated. `status` runs
+  without either, as does all of informatica-assessment.
 
 ## Scope
 
-Informatica PowerCenter is the whole scope, starting from an export someone hands you:
-workflow XML for orchestration context, mappings for conversion. Producing the export
-(Repository Manager, `pmrep objectexport`) is the Informatica team's job, not a step here.
-
-Two adjacent paths the toolkit CLI supports are deliberately **not** wrapped here — SSIS
-`.dtsx` packages (assessable via `ds collect etl --type=SSIS`) and SQL Server
-stored procedures (`agent etl-extract --etl-platform=procedure`); use the CLI directly, or a
-future sibling plugin.
+Informatica PowerCenter mappings are the whole scope. Two adjacent paths the toolkit CLI
+supports are deliberately **not** wrapped here — SSIS `.dtsx` packages and SQL Server stored
+procedures (`agent etl-extract --etl-platform=procedure`); use the CLI directly, or a future
+sibling plugin. The naming is specific on purpose: a generic ETL-conversion plugin invites
+wandering off the documented path.
 
 Within a converted wave, orchestration is not generated: `agent etl-extract` works at mapping
-level and doesn't capture workflow or session names. `analyzer-out/dependency.txt` from the
-collect step is the record for rebuilding schedules by hand.
+level and doesn't capture workflow or session names. `analyzer-out/dependency.txt` from
+`/informatica-assessment:collect` is the record for rebuilding schedules by hand.

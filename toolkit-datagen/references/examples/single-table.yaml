@@ -1,0 +1,68 @@
+# One table, fixed row count — the starting point for "N rows of X".
+#
+# Shows: fixed `rows`, a surrogate primary key, Enum with explicit probabilities,
+# Currency config, and a sparsely populated nullable column via `density`.
+#
+#   toolkit datagen validate single-table.yaml
+#   toolkit datagen file single-table.yaml --output out --mode create --seed 42
+sourceType: snowflake
+tables:
+  - name: CUSTOMER
+    database: SANDBOX
+    schema: DEMO
+    rows: 500
+    columns:
+      # primaryKey implies unique: true and nullable: false, whatever the spec says.
+      - name: CUSTOMER_ID
+        primaryKey: true
+        provider: NumberSequence
+        config:
+          start: 1
+          step: 1
+        dataType: NUMBER
+        precision: 38
+        scale: 0
+
+      - name: FULL_NAME
+        provider: FullName
+        dataType: VARCHAR
+        precision: 100
+
+      - name: EMAIL
+        provider: Email
+        dataType: VARCHAR
+        precision: 120
+
+      - name: SIGNUP_DATE
+        provider: RandomDate
+        dataType: DATE
+
+      # A fixed value set with real-world weighting. Probabilities must sum to 1.0;
+      # a plain list instead of a map lets the sampler decide the frequencies.
+      - name: SEGMENT
+        provider: Enum
+        config:
+          values:
+            CONSUMER: 0.7
+            SMB: 0.2
+            ENTERPRISE: 0.1
+        dataType: VARCHAR
+        precision: 20
+
+      - name: LIFETIME_VALUE
+        provider: Currency
+        config:
+          min: 0
+          max: 25000
+          scale: 2
+        dataType: NUMBER
+        precision: 12
+        scale: 2
+
+      # density only does something on a nullable column: ~15% of rows get a value,
+      # the rest are null. On a non-nullable column it is ignored.
+      - name: CHURNED_AT
+        nullable: true
+        density: 0.15
+        provider: RandomTimestamp
+        dataType: TIMESTAMP_NTZ

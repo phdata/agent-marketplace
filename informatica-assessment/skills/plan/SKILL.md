@@ -7,8 +7,9 @@ description: Run ds migration-plan to decompose the collected Informatica lineag
 
 `ds migration-plan` clusters the lineage graph into groups, orders them into waves by
 dependency, and scores each for complexity, priority, and risk. Its output is the plan of
-record for the rest of the conversion — this plugin keeps no separate wave file. Free path:
-no LLM, no agent license.
+record for the rest of the conversion: `plan.txt`, `inventory.csv`, and a JSON snapshot are all
+there is — informatica-etl-conversion reads them off disk and keeps no separate wave file of its
+own. Free path: no LLM, no agent license.
 
 ## Step 0 — preflight
 
@@ -22,7 +23,7 @@ toolkit-core's scripts are not on PATH (plugin `bin/` directories aren't permitt
 paths into the session at startup. Use that path; if the hook didn't run, the script is
 `scripts/toolkit-check` in the installed toolkit-core plugin directory.
 
-Lineage must exist (`/informatica-etl-conversion:lineage`).
+Lineage must exist (`/informatica-assessment:lineage`).
 
 ## Step 1 — cut a plan
 
@@ -48,20 +49,24 @@ Never parse the command's own output — it truncates long lists. Read the writt
 - **`plan.txt`** is the human rendering and what you walk through with the user. On a large
   migration, read it in pieces (the summary table first, then the groups being discussed) rather
   than pulling the whole file into context.
-- **The JSON snapshot** is the machine-readable source for counting, filtering, and anything
-  the wave and status skills need:
+- **The JSON snapshot** is the machine-readable source for counting, filtering, and everything
+  the conversion plugin's `wave` and `status` skills read. Read it through the bundled script
+  rather than by hand:
 
   ```bash
-  SNAP=$(ls -1 tools/ds/snapshots/migration-plan/*_legacy_dw.json | sort | tail -1)
-  jq -r '.summary' "$SNAP"
-  jq -r '.waves[] | .number as $w | .groups[]
-         | [$w, .name, ((.processes // [])|length), ((.tables // [])|length)] | @tsv' "$SNAP"
+  python3 <plugin>/scripts/infa_plan.py summary  legacy_dw   # wave/group/table counts
+  python3 <plugin>/scripts/infa_plan.py groups   legacy_dw   # TSV: wave, group, mappings, tables
+  python3 <plugin>/scripts/infa_plan.py snapshot legacy_dw   # the file's path, to read directly
   ```
 
-  Read the file directly rather than through `toolkit ds show` — that command currently fails
-  to deserialize migration-plan snapshots containing Informatica processes (an
-  `Unrecognized field "componentCount"` error, in every format). Guard against nulls with
-  `(.processes // [])` and don't assume wave numbering starts at 0.
+  The script owns three things that are easy to get wrong by hand, and it finds the newest
+  snapshot itself: a group's `processes` and `tables` keys can be **absent entirely**, wave
+  numbers do **not** necessarily start at 0, and only `INFORMATICA_MAPPING` processes are this
+  migration's mappings — a group can also hold SQL scripts, or be table-only.
+
+  Do not reach for `toolkit ds show`: it currently fails to deserialize any migration-plan
+  snapshot containing Informatica processes (an `Unrecognized field "componentCount"` error, in
+  every format), which is the whole reason the script reads the JSON off disk.
 
 Walk the user through, in this order:
 

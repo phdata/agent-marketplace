@@ -26,10 +26,30 @@ DDL + initial/incremental transforms + data-quality tests + datagen spec
 | Skill | Purpose |
 |---|---|
 | `/toolkit-pipeline:spec` | Author or validate a DiscoveryConfig dataspec |
-| `/toolkit-pipeline:discover` | Dataspec → data contract, with the human-review resolve loop |
+| `/toolkit-pipeline:discover` | Dataspec → data contract, with the grouped human-review queue and resolve loop |
 | `/toolkit-pipeline:build` | Approved contract → pipeline code, tests, datagen spec |
 
 The dataspec field reference and per-tooling examples live in [references/](references/).
+
+## Bundled scripts
+
+[scripts/](scripts/) is invoked by path from the plugin directory — plugin scripts are not on
+PATH, and `CLAUDE_PLUGIN_ROOT` is not set for the Bash tool.
+
+| Command | Purpose |
+|---|---|
+| `review_queue.py list [--dir discovery-out] [--all]` | Every contract's human-review items collapsed into one numbered list of distinct questions, biggest group first |
+| `review_queue.py show <group>` | Every item in one group, with its contract, description, comment, and resolver note |
+| `review_queue.py comment <group> "decision"` | Write one decision into every item in a group, across every contract that has it |
+
+It exists because the review queue is mostly repeats — the same idiom across many target
+tables — and `--resolve` applies one comment per item, so a single decision broadcast across a
+group is the cheap path through a long queue. Python 3 standard library only (no jq), so it
+behaves the same on Windows, macOS, and Linux.
+
+The `mockdata/datagen-spec.yaml` that `build` emits per contract is a starting point, not a
+finished spec — [toolkit-datagen](../toolkit-datagen/) tunes and runs it (and handles synthetic
+data requests that have nothing to do with a pipeline).
 
 ## Prerequisites
 

@@ -20,7 +20,7 @@ toolkit-core's scripts are not on PATH (plugin `bin/` directories aren't permitt
 paths into the session at startup. Use that path; if the hook didn't run, the script is
 `scripts/toolkit-check` in the installed toolkit-core plugin directory.
 
-The corpus must already be imported (`/informatica-etl-conversion:collect`). If extraction
+The corpus must already be imported (`/informatica-assessment:collect`). If extraction
 reports no patterns and no tables, that's the symptom of an empty store — go back to collect.
 
 ## Step 1 — extract
@@ -34,7 +34,7 @@ must never be dialed. With real access to the legacy database, drop `--offline` 
 be verified and classified against the live catalog.
 
 Middle ground: stay offline but enrich from a scan snapshot taken earlier
-(`/informatica-etl-conversion:collect` Step 5) by passing the snapshot selector as the
+(`/informatica-assessment:collect` Step 5) by passing the snapshot selector as the
 positional argument:
 
 ```bash
@@ -64,7 +64,7 @@ toolkit ds lineage legacy_dw --table DW.DIM_CUSTOMER     # metadata, column usag
 
 `--lookup` accepts `%` wildcards. If the trees match the user's mental model of the system, the
 corpus is trustworthy enough to plan from; if whole branches are missing, the export is
-incomplete — back to `/informatica-etl-conversion:collect`.
+incomplete — back to `/informatica-assessment:collect`.
 
 These lookups stay useful for the whole migration, long after the plan is cut — come back here
 whenever someone asks what feeds or reads a table.
@@ -72,4 +72,4 @@ whenever someone asks what feeds or reads a table.
 Command reference: the `ds lineage` sections of `docs/toolkit/data-source.adoc`, written into
 the project by `toolkit init`.
 
-Then hand off to `/informatica-etl-conversion:plan`.
+Then hand off to `/informatica-assessment:plan`.

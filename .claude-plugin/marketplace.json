@@ -1,6 +1,6 @@
 {
   "name": "phdata",
-  "description": "phData's catalog of coding-agent extensions: plugins packaging phData Toolkit CLI workflows (setup, datasource connection, pipeline generation) as skills, preflight scripts, and hooks.",
+  "description": "phData's catalog of coding-agent extensions: plugins packaging phData Toolkit CLI workflows (setup, datasource connection, pipeline generation, synthetic data, Informatica migration) as skills, preflight scripts, and hooks.",
   "owner": { "name": "phData", "url": "https://github.com/phdata" },
   "plugins": [
     {
@@ -14,9 +14,19 @@
       "description": "Dataspec-driven pipeline generation via toolkit agent discovery and pipeline-build: SQL, dbt, or PySpark transforms plus tests and a datagen spec"
     },
     {
+      "name": "toolkit-datagen",
+      "source": "./toolkit-datagen",
+      "description": "Synthetic, fake, mock, and test data via toolkit datagen: the agent writes a data spec, the toolkit generates related tables at any volume to CSV or into a database, reproducibly via a seed"
+    },
+    {
+      "name": "informatica-assessment",
+      "source": "./informatica-assessment",
+      "description": "Assess an Informatica PowerCenter estate with collect etl, ds lineage, and ds migration-plan: dependency-ordered scored migration waves and an inventory, offline-capable, no LLM required"
+    },
+    {
       "name": "informatica-etl-conversion",
       "source": "./informatica-etl-conversion",
-      "description": "Informatica PowerCenter conversion: survey the mappings (collect, lineage, migration-plan) and convert them wave by wave via agent etl-extract, discovery with a grouped review queue, and pipeline-build — or convert a handful of mappings in a single pass"
+      "description": "Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines via agent etl-extract, discovery with a grouped human-review queue, and pipeline-build — one migration-plan group at a time, or a small corpus in a single pass"
     }
   ]
 }

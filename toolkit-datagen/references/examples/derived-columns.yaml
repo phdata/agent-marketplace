@@ -1,0 +1,139 @@
+# Columns calculated from other columns, with `transform`.
+#
+# A transform runs an MVEL expression and assigns the result to the column. Every
+# column it reads has to be declared in `references` (variable name -> column):
+#   - a bare column name is a column in the same table
+#   - `qualified.table.column` is a column in another table, which also makes the two
+#     tables generate together as a group
+# Inside the expression, `self` is this column's own provider value (null when there
+# is no provider), and `rowIndex`, `groupSize`, and `groupIndex` describe where the
+# row sits in its group.
+#
+# Iterate on an expression without running a whole generation:
+#   toolkit datagen mvel derived-columns.yaml
+#
+# What transforms cannot do: aggregate a parent's children. A child row can read its
+# parent's columns, never the reverse — children are generated after their parent.
+# An order total belongs on the line rows, or in the query that reads them.
+sourceType: snowflake
+tables:
+  - name: ORDERS
+    database: SANDBOX
+    schema: DEMO
+    rows: 400
+    columns:
+      - name: ORDER_ID
+        primaryKey: true
+        provider: UUIDv7
+        dataType: VARCHAR
+        precision: 36
+
+      - name: ORDERED_AT
+        provider: RandomTimestamp
+        dataType: TIMESTAMP_NTZ
+
+      # A date that must fall after another date: 1 to 9 days later, and null on the
+      # ~15% of orders that have not shipped.
+      #
+      # The nullability is inside the expression on purpose. `density` on a transform
+      # column skips the expression entirely, which leaves the column out of the row
+      # altogether — and then any *other* transform referencing it fails with
+      # "Failed to find column reference". Use density on provider columns; on a
+      # transform column that something else reads, return null from the function.
+      - name: SHIPPED_AT
+        nullable: true
+        transform:
+          function: "randomDouble() <= 0.85 ? addDays(ordered, randomInt(1, 10)) : null"
+          references:
+            ordered: ORDERED_AT
+        dataType: TIMESTAMP_NTZ
+
+      # Reads a nullable transform column, so it has to handle the null itself.
+      # Quoted because a ternary contains ": ", which YAML would otherwise read as a
+      # nested mapping. Quote any expression holding a colon-space.
+      - name: DAYS_TO_SHIP
+        nullable: true
+        transform:
+          function: "shipped == null ? null : daysBetween(ordered, shipped)"
+          references:
+            ordered: ORDERED_AT
+            shipped: SHIPPED_AT
+        dataType: NUMBER
+        precision: 5
+        scale: 0
+
+      # A status driven by another column rather than drawn independently, so the two
+      # can never contradict each other.
+      - name: STATUS
+        transform:
+          function: 'shipped == null ? "PENDING" : "SHIPPED"'
+          references:
+            shipped: SHIPPED_AT
+        dataType: VARCHAR
+        precision: 20
+
+      - name: ORDER_YEAR
+        transform:
+          function: year(ordered)
+          references:
+            ordered: ORDERED_AT
+        dataType: NUMBER
+        precision: 4
+        scale: 0
+
+  - name: ORDER_LINE
+    database: SANDBOX
+    schema: DEMO
+    rowGenerator:
+      range: 1..4
+    columns:
+      - name: ORDER_ID
+        foreignKey: SANDBOX.DEMO.ORDERS.ORDER_ID
+
+      # provider and transform together: the provider generates, the transform edits.
+      # `self` is the generated value.
+      - name: SKU
+        provider: RandomString
+        transform:
+          function: "\"SKU-\" + self.toUpperCase()"
+        dataType: VARCHAR
+        precision: 40
+
+      - name: QUANTITY
+        provider: RandomNumber
+        config:
+          min: 1
+          max: 10
+        dataType: NUMBER
+        precision: 4
+        scale: 0
+
+      - name: UNIT_PRICE
+        provider: Currency
+        config:
+          min: 1
+          max: 500
+          scale: 2
+        dataType: NUMBER
+        precision: 10
+        scale: 2
+
+      # Arithmetic across two columns of the same row.
+      - name: LINE_TOTAL
+        transform:
+          function: price * quantity
+          references:
+            price: UNIT_PRICE
+            quantity: QUANTITY
+        dataType: NUMBER
+        precision: 12
+        scale: 2
+
+      # A column from another table: the line carries its order's timestamp, so the
+      # two always agree.
+      - name: ORDER_PLACED_AT
+        transform:
+          function: placed
+          references:
+            placed: SANDBOX.DEMO.ORDERS.ORDERED_AT
+        dataType: TIMESTAMP_NTZ

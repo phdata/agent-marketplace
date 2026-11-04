@@ -1,0 +1,81 @@
+# A dimension whose values must be the real ones — region names, currency codes, a
+# product catalog — joined to randomly generated fact rows.
+#
+# `rowGenerator.staticSource` points the table at a CSV; one row is generated per CSV
+# row. A column with `provider: StaticSource` takes its value from the CSV column of
+# the same name (matching case), and any other column is still generated randomly.
+# Static sources must be CSV. The path is resolved from the directory the command runs
+# in, so run from the toolkit project (or give an absolute path).
+#
+#   toolkit datagen file static-dimension.yaml --output out --mode create --seed 3
+sourceType: snowflake
+tables:
+  - name: DIM_STORE
+    database: SANDBOX
+    schema: RETAIL
+    rowGenerator:
+      staticSource: store-dimension.csv
+    columns:
+      # Not in the CSV — generated, and dense because the CSV row count is small.
+      - name: STORE_KEY
+        primaryKey: true
+        provider: NumberSequence
+        config:
+          start: 1
+          step: 1
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+
+      # These three names exist as columns in store-dimension.csv.
+      - name: STORE_CODE
+        provider: StaticSource
+        unique: true
+        dataType: VARCHAR
+        precision: 10
+      - name: STORE_NAME
+        provider: StaticSource
+        dataType: VARCHAR
+        precision: 60
+      - name: REGION
+        provider: StaticSource
+        dataType: VARCHAR
+        precision: 20
+
+      # A column-level staticSource wins over the table-level one, which is how two
+      # CSVs feed one table. Left commented out here because the second CSV is not
+      # bundled:
+      # - name: DISTRICT
+      #   provider: StaticSource
+      #   config:
+      #     staticSource: store-districts.csv
+
+      - name: OPENED_ON
+        provider: RandomDate
+        dataType: DATE
+
+  - name: FACT_DAILY_SALES
+    database: SANDBOX
+    schema: RETAIL
+    rowGenerator:
+      # 30 days of sales per store.
+      range: 30
+    columns:
+      - name: STORE_KEY
+        foreignKey: SANDBOX.RETAIL.DIM_STORE.STORE_KEY
+      - name: SALES_DATE
+        provider: DateSequence
+        config:
+          start: 2026-01-01
+          step: 1
+          unit: days
+        dataType: DATE
+      - name: NET_SALES
+        provider: Currency
+        config:
+          min: 500
+          max: 40000
+          scale: 2
+        dataType: NUMBER
+        precision: 12
+        scale: 2

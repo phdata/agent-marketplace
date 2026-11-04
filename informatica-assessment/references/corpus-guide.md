@@ -47,7 +47,7 @@ corpus and re-imported with `--replace-all` instead.
 
 ## Checking what arrived
 
-The analyzer scan in `/informatica-etl-conversion:collect` is the completeness check. Two of
+The analyzer scan in `/informatica-assessment:collect` is the completeness check. Two of
 its console findings decide whether the corpus is worth planning from:
 
 - **Mappings referenced in the workflows without a mapping file** — the export is incomplete.
