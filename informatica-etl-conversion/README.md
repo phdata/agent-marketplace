@@ -65,7 +65,7 @@ mapping regex must require whitespace after `<MAPPING` (or `<MAPPINGVARIABLE` ma
 `NAME ="x"` spacing, and anchor on the element rather than a bare `NAME=` (or every workflow
 scheduling the mapping matches). The plan snapshot must survive absent `processes`/`tables` keys,
 wave numbering that may or may not start at 0, and groups holding SQL scripts or no processes at
-all. `infa_plan.py` reads the snapshot JSON off disk because `toolkit ds show` cannot deserialize
+all. `infa_plan.py` reads the snapshot JSON off disk because `toolkit migration show` cannot deserialize
 a plan containing Informatica processes.
 
 informatica-assessment ships the same two scripts, so either plugin stands alone.

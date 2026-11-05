@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-infa_plan.py - read the migration plan produced by `toolkit ds migration-plan`.
+infa_plan.py - read the migration plan produced by `toolkit migration plan`.
 
 Usage (run with whichever Python 3 is on PATH - `python3` on macOS/Linux, `python` or
 `py` on Windows):
@@ -11,8 +11,8 @@ Usage (run with whichever Python 3 is on PATH - `python3` on macOS/Linux, `pytho
     python3 infa_plan.py snapshot  <datasource>                   path to the latest snapshot
     python3 infa_plan.py summary   <datasource>                   the plan's summary block
 
-Reads <project>/tools/ds/snapshots/migration-plan/<timestamp>_<datasource>.json directly.
-`toolkit ds show <ds>:migration-plan:latest` cannot be used: it fails to deserialize any
+Reads <project>/tools/migration/snapshots/migration-plan/<timestamp>_<datasource>.json directly.
+`toolkit migration show <ds>:migration-plan:latest` cannot be used: it fails to deserialize any
 plan containing Informatica processes (`Unrecognized field "componentCount"`), in every
 format.
 
@@ -50,13 +50,13 @@ def project_root():
 
 
 def latest_snapshot(datasource):
-    directory = project_root() / "tools" / "ds" / "snapshots" / "migration-plan"
+    directory = project_root() / "tools" / "migration" / "snapshots" / "migration-plan"
     # Snapshot names are '<timestamp>_<datasource>.json', so a plain sort is newest-last.
     candidates = sorted(directory.glob("*_{}.json".format(datasource)))
     if not candidates:
         sys.stderr.write("infa_plan: no migration-plan snapshot for datasource '{}' under {}\n"
                          .format(datasource, directory))
-        sys.stderr.write("hint: run 'toolkit ds migration-plan {}' first, from the toolkit "
+        sys.stderr.write("hint: run 'toolkit migration plan {}' first, from the toolkit "
                          "project directory\n".format(datasource))
         sys.exit(3)
     return candidates[-1]
@@ -144,7 +144,7 @@ def cmd_summary(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="infa_plan.py",
-        description="Read a toolkit ds migration-plan snapshot.")
+        description="Read a toolkit migration plan snapshot.")
     sub = parser.add_subparsers(dest="command")
 
     p = sub.add_parser("groups", help="TSV: wave, group, mappings, tables")

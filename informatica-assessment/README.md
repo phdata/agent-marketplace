@@ -17,7 +17,7 @@ a directory of exported PowerCenter XML  →  copied in as informatica-xml/
 toolkit ds lineage <legacy-ds>
    │   /informatica-assessment:lineage — parse-failure triage, spot checks
    ▼
-toolkit ds migration-plan <legacy-ds>
+toolkit migration plan <legacy-ds>
    │   /informatica-assessment:plan — waves, groups, held-out objects, tuning loop
    ▼
 migration-plan/<ds>/plan.txt + inventory.csv        (the plan of record)
@@ -34,7 +34,7 @@ sets the SQL dialect is enough for the whole assessment.
 |---|---|
 | `/informatica-assessment:collect` | Copy in the corpus, size it, pick a route; analyzer reconnaissance; `ds collect etl`; optional legacy source-DB scan |
 | `/informatica-assessment:lineage` | Extract lineage, triage SQL parse failures, spot-check dataflows |
-| `/informatica-assessment:plan` | Cut and tune the wave plan with `ds migration-plan` |
+| `/informatica-assessment:plan` | Cut and tune the wave plan with `migration plan` |
 
 `:collect` sizes the corpus and, when it's small (around 20 mappings or fewer), asks which route
 to take: the full assessment, or skipping straight to conversion. The assessment exists to make
@@ -68,7 +68,7 @@ must require whitespace after `<MAPPING` (or `<MAPPINGVARIABLE` matches), tolera
 spacing, and anchor on the element rather than a bare `NAME=` (or every workflow scheduling the
 mapping matches). The plan snapshot must survive absent `processes`/`tables` keys, wave numbering
 that may or may not start at 0, and groups holding SQL scripts or no processes at all.
-`infa_plan.py` reads the snapshot JSON off disk because `toolkit ds show` cannot deserialize a
+`infa_plan.py` reads the snapshot JSON off disk because `toolkit migration show` cannot deserialize a
 plan containing Informatica processes.
 
 informatica-etl-conversion ships the same two scripts, so either plugin stands alone.

@@ -1,11 +1,11 @@
 ---
 name: plan
-description: Run ds migration-plan to decompose the collected Informatica lineage into ordered, scored migration waves, then walk the waves, groups, and held-out objects with the user and tune until the cut is right. Use when the user wants a migration plan, wave sequencing, or an inventory for an Informatica conversion, or asks to re-cut an existing plan.
+description: Run migration plan to decompose the collected Informatica lineage into ordered, scored migration waves, then walk the waves, groups, and held-out objects with the user and tune until the cut is right. Use when the user wants a migration plan, wave sequencing, or an inventory for an Informatica conversion, or asks to re-cut an existing plan.
 ---
 
 # Plan: lineage → ordered migration waves
 
-`ds migration-plan` clusters the lineage graph into groups, orders them into waves by
+`migration plan` clusters the lineage graph into groups, orders them into waves by
 dependency, and scores each for complexity, priority, and risk. Its output is the plan of
 record for the rest of the conversion: `plan.txt`, `inventory.csv`, and a JSON snapshot are all
 there is — informatica-etl-conversion reads them off disk and keeps no separate wave file of its
@@ -28,19 +28,19 @@ Lineage must exist (`/informatica-assessment:lineage`).
 ## Step 1 — cut a plan
 
 ```bash
-toolkit ds migration-plan legacy_dw
+toolkit migration plan legacy_dw
 ```
 
 For a small migration (under ~50 tables) the defaults — tuned for hundreds of tables — collapse
 everything into one group. Start from the small-migration preset instead:
 
 ```bash
-toolkit ds migration-plan legacy_dw \
+toolkit migration plan legacy_dw \
     --hub-min-component-size 10 --hub-min-readers 4 --max-group-size 8
 ```
 
 Writes `migration-plan/legacy_dw/plan.txt`, `migration-plan/legacy_dw/inventory.csv`, and a
-JSON snapshot under `tools/ds/snapshots/migration-plan/`.
+JSON snapshot under `tools/migration/snapshots/migration-plan/`.
 
 ## Step 2 — review from the artifacts, not the console
 
@@ -64,7 +64,7 @@ Never parse the command's own output — it truncates long lists. Read the writt
   numbers do **not** necessarily start at 0, and only `INFORMATICA_MAPPING` processes are this
   migration's mappings — a group can also hold SQL scripts, or be table-only.
 
-  Do not reach for `toolkit ds show`: it currently fails to deserialize any migration-plan
+  Do not reach for `toolkit migration show`: it currently fails to deserialize any migration-plan
   snapshot containing Informatica processes (an `Unrecognized field "componentCount"` error, in
   every format), which is the whole reason the script reads the JSON off disk.
 
@@ -99,7 +99,7 @@ Each re-run overwrites `plan.txt`/`inventory.csv` and adds a snapshot. Warn the 
 re-cutting once wave execution has started: group names and wave numbers can change, which
 strands existing `waves/` directories —`/informatica-etl-conversion:status` flags that drift.
 
-Command reference: the `ds migration-plan` sections of `docs/toolkit/data-source.adoc`, written
+Command reference: the `migration plan` sections of `docs/toolkit/data-source.adoc`, written
 into the project by `toolkit init` — worth reading before tuning, since it documents what each
 knob does to the clustering.
 

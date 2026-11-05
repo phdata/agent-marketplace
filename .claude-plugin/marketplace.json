@@ -21,7 +21,7 @@
     {
       "name": "informatica-assessment",
       "source": "./informatica-assessment",
-      "description": "Assess an Informatica PowerCenter estate with collect etl, ds lineage, and ds migration-plan: dependency-ordered scored migration waves and an inventory, offline-capable, no LLM required"
+      "description": "Assess an Informatica PowerCenter estate with collect etl, ds lineage, and migration plan: dependency-ordered scored migration waves and an inventory, offline-capable, no LLM required"
     },
     {
       "name": "informatica-etl-conversion",
