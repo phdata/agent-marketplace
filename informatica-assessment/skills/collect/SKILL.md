@@ -1,6 +1,6 @@
 ---
 name: collect
-description: Copy in a supplied directory of exported Informatica PowerCenter XML and import it into the toolkit with ds collect etl, after analyzer reconnaissance that checks the export for completeness, plus an optional legacy source-database scan. Use when starting an Informatica conversion assessment, when the user has a directory of PowerCenter exports to analyze, or asks how to get Informatica mappings into the toolkit.
+description: Copy in a supplied directory of exported Informatica PowerCenter XML and import it into the toolkit with collect etl, after analyzer reconnaissance that checks the export for completeness, plus an optional legacy source-database scan. Use when starting an Informatica conversion assessment, when the user has a directory of PowerCenter exports to analyze, or asks how to get Informatica mappings into the toolkit.
 ---
 
 # Collect: PowerCenter XML → toolkit ETL store
@@ -173,7 +173,7 @@ explain that these mappings can't be collected today.
 ## Step 5 — import the corpus
 
 ```bash
-toolkit ds collect etl legacy_dw --type=INFORMATICA -i informatica-xml --replace-all
+toolkit collect etl legacy_dw --type=INFORMATICA -i informatica-xml --replace-all
 ```
 
 - Never connects to the datasource; its configured type only picks the SQL dialect.
@@ -203,7 +203,7 @@ show up as table sizes in the plan. Note for Teradata: no dedicated scanner, so 
 to generic JDBC metadata — it works, with lower fidelity. The **target warehouse is not
 scanned** in this phase.
 
-Command reference for everything above: `docs/toolkit/data-source.adoc` (`ds collect etl`,
+Command reference for everything above: `docs/toolkit/data-source.adoc` (`collect etl`,
 `ds scan`, datasource config and filters) and `docs/toolkit/analyzer.adoc`, both written into
 the project by `toolkit init`. Prefer them over guessing at syntax; use `--help` for exact
 flags.

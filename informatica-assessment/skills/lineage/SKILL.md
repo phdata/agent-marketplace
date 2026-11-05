@@ -1,6 +1,6 @@
 ---
 name: lineage
-description: Extract table lineage from the collected Informatica corpus with ds lineage, then spot-check dataflows with --lookup and --table. Use after ds collect etl, when lineage looks incomplete, or when the user asks what feeds or reads a table in the legacy database.
+description: Extract table lineage from the collected Informatica corpus with ds lineage, then spot-check dataflows with --lookup and --table. Use after collect etl, when lineage looks incomplete, or when the user asks what feeds or reads a table in the legacy database.
 ---
 
 # Lineage: collected mappings → dataflow graph

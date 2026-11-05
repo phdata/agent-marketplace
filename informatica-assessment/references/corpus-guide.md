@@ -77,4 +77,4 @@ development one that has drifted.
 
 SSIS `.dtsx` packages and SQL Server stored procedures can also be assessed and converted by
 the toolkit CLI, but this plugin's skills are written for Informatica PowerCenter only. See
-`toolkit ds collect etl --help` and `toolkit agent etl-extract --help` for those paths.
+`toolkit collect etl --help` and `toolkit agent etl-extract --help` for those paths.

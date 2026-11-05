@@ -11,7 +11,7 @@ so engineering repos don't each carry their own `.claude/skills/`.
 | [toolkit-core](toolkit-core/) | Toolkit CLI foundation: install, PATH setup, project init, JDBC connection/datasource configuration. Required by all other toolkit plugins. |
 | [toolkit-pipeline](toolkit-pipeline/) | Dataspec-driven pipeline generation via `toolkit agent discovery` and `toolkit agent pipeline-build`: SQL, dbt, or PySpark transforms plus data-quality tests and a synthetic-data spec. |
 | [toolkit-datagen](toolkit-datagen/) | Synthetic, fake, mock, and test data via `toolkit datagen`: the agent writes a data spec, the toolkit generates related tables at any volume to CSV or straight into a database, reproducibly via a seed. Also clones the shape of an existing database without copying rows. |
-| [informatica-assessment](informatica-assessment/) | Assess an Informatica PowerCenter estate: export completeness, `ds collect etl`, `ds lineage`, and `migration plan` into dependency-ordered scored waves with an inventory. Offline-capable; no LLM or agent license. |
+| [informatica-assessment](informatica-assessment/) | Assess an Informatica PowerCenter estate: export completeness, `collect etl`, `ds lineage`, and `migration plan` into dependency-ordered scored waves with an inventory. Offline-capable; no LLM or agent license. |
 | [informatica-etl-conversion](informatica-etl-conversion/) | Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines: `agent etl-extract` behind a dry-run cost gate, discovery with a grouped human-review queue, and pipeline-build — one migration-plan group at a time, or a small corpus in a single pass. |
 
 The two Informatica plugins split along the line where the cost does: everything in

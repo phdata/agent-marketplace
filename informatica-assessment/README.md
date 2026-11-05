@@ -12,7 +12,7 @@ both.
 ```
 a directory of exported PowerCenter XML  →  copied in as informatica-xml/
    │   /informatica-assessment:collect — analyzer recon (export completeness),
-   │   ds collect etl, optional legacy source-database scan
+   │   collect etl, optional legacy source-database scan
    ▼
 toolkit ds lineage <legacy-ds>
    │   /informatica-assessment:lineage — parse-failure triage, spot checks
@@ -32,7 +32,7 @@ sets the SQL dialect is enough for the whole assessment.
 
 | Skill | Purpose |
 |---|---|
-| `/informatica-assessment:collect` | Copy in the corpus, size it, pick a route; analyzer reconnaissance; `ds collect etl`; optional legacy source-DB scan |
+| `/informatica-assessment:collect` | Copy in the corpus, size it, pick a route; analyzer reconnaissance; `collect etl`; optional legacy source-DB scan |
 | `/informatica-assessment:lineage` | Extract lineage, triage SQL parse failures, spot-check dataflows |
 | `/informatica-assessment:plan` | Cut and tune the wave plan with `migration plan` |
 
@@ -89,7 +89,7 @@ Informatica PowerCenter, starting from an export someone hands you: workflow XML
 orchestration context, mappings for the conversion that follows. Producing the export
 (Repository Manager, `pmrep objectexport`) is the Informatica team's job, not a step here.
 
-SSIS `.dtsx` packages are also assessable with `ds collect etl --type=SSIS`, and are
+SSIS `.dtsx` packages are also assessable with `collect etl --type=SSIS`, and are
 deliberately **not** wrapped here — use the CLI directly, or a future sibling plugin. The naming
 is specific on purpose: a generic ETL-assessment plugin invites wandering off the documented
 path.
