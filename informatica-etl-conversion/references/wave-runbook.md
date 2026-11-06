@@ -132,10 +132,14 @@ every affected contract, preserving each file's key order and formatting.
 | `[ASSERTION FAILED]` | Its proposed mapping contradicts example records |
 | `[LOAD STRATEGY]` | An incremental load with no change-detection method chosen |
 | `[SPEC AMBIGUITY]` | An ambiguity `etl-extract` recorded from the original mapping — a question about the Informatica logic, not about the warehouse |
-| `[PROCEDURAL LOOP]` | The source ran this load row by row; the translated loop is reference only — the pipeline must be built set-based |
 
 The prose version of each item is in the matching `discovery-report.txt` under
 `ITEMS REQUIRING YOUR REVIEW` — read that to the user rather than raw JSON.
+
+`[PROCEDURAL LOOP]` and `[LOOP REWRITE HINT]` are deliberately absent: discovery can emit the
+first, but only for a spec whose `resolvedTransformation.advisory` is set, and that is set in
+exactly one place — the stored-procedure spec assembler. An Informatica wave never produces
+either. They belong to procedure-etl-conversion.
 
 Present a set of near-identical items as one decision:
 

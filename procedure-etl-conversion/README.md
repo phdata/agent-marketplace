@@ -33,7 +33,7 @@ Both limits are enforced by the toolkit, not preferences:
 
 | | Supported | Not supported |
 |---|---|---|
-| Source dialect | **mssql** (T-SQL), **oracle** (PL/SQL) | anything else — Teradata, HANA, Postgres, Netezza, Redshift, BigQuery … |
+| Source dialect | **mssql** (T-SQL), **oracle** (PL/SQL) | anything else — HANA, Postgres, Netezza, Redshift, BigQuery … and **Teradata**, including BTEQ, which the toolkit can collect, lineage-extract, plan and `sql translate`, but cannot extract through this path |
 | Target platform | **Snowflake** | **Databricks**, which the Informatica path does support |
 
 A run with any other dialect or target is refused outright, so establish both before starting.

@@ -46,6 +46,13 @@ Settle these before anything else. Both are enforced by the toolkit and both fai
 
 If either is wrong, say which one and stop. Everything below assumes both hold.
 
+**Teradata comes up here constantly, so know the answer:** BTEQ scripts *are* supported by the
+toolkit — `collect script` imports them, `ds lineage` and `migration plan` read them, and
+`sql translate` converts their SQL — but **not by this path**. There is no deterministic
+procedure extraction for Teradata, because the extractor's grammars are T-SQL and PL/SQL. Say
+what *is* possible rather than just refusing; `references/procedure-runbook.md` has the
+breakdown and the two BTEQ lineage caveats worth repeating.
+
 ## Step 1 — preflight
 
 ```bash
