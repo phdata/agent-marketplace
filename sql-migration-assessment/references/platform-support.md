@@ -4,7 +4,36 @@ The whole shape of an assessment is decided by how the SQL can be got out of the
 that differs per platform more than anything else here. Settle this first; everything downstream
 is the same regardless.
 
+## Read the current matrix, don't trust this one
+
+**The toolkit's own docs are the source of truth, and they ship into every project.** The tables
+below are a snapshot taken on **2026-11-06**, kept here so the common cases need no lookup — but
+the toolkit adds platforms and capabilities, and a stale "not supported" here would tell a user
+something is impossible when it has since shipped. That is the one failure mode worth guarding
+against, because it is silent.
+
+So when the platform in front of you is anything other than SQL Server, Oracle or Teradata, or
+when a user says a route should work that the table says does not, check the project's own copy
+first. `toolkit init` writes it, and both tables have a unique anchor:
+
+```bash
+# which object types `collect remote` can collect, per platform
+grep -A50 '^===== Supported Object Types' docs/toolkit/data-source.adoc | grep -E '^\|'
+
+# which platforms `ds lineage` parses, and from which collection route
+grep -A24 'Lineage Support' docs/toolkit/data-source.adoc | grep -E '^\| '
+```
+
+(`Supported Platforms` appears twice in that file — the first belongs to `ds row-diff`. Anchor on
+`Lineage Support` instead, which is unique.)
+
+Facts in this file that come from the **code** rather than the docs are marked as such; those
+fail loudly and self-correct, so they are safe to rely on. Everything in the two tables below is
+doc-sourced, and can drift.
+
 ## Collection routes
+
+*Snapshot 2026-11-06 — verify with the grep above before telling a user something is impossible.*
 
 | Platform | `collect remote` (object DDL) | `collect script` (files) | `collect history` (live) |
 |---|---|---|---|
@@ -37,6 +66,8 @@ So in practice:
 Patterns in a dialect it cannot parse surface as lineage errors rather than edges — which is why
 a low parse rate is the signal to check, not a thing to chase statement by statement.
 
+*Snapshot 2026-11-06 — same caveat.*
+
 | Platform | Lineage |
 |---|---|
 | Snowflake | Full: extraction, table lookup, lineage lookup |
@@ -51,8 +82,10 @@ the table above does guarantee.
 
 ## BTEQ specifics
 
-Teradata BTEQ scripts are parsed, with the dot-commands isolated and handled deliberately. Two
-of those decisions change what the lineage is worth, so state them when assessing a BTEQ estate:
+Teradata BTEQ scripts are parsed, with the dot-commands isolated and handled deliberately. This
+behaviour is **in the collector's code**, not a support table, so it does not drift the way the
+matrices above can. Two of those decisions change what the lineage is worth, so state them when
+assessing a BTEQ estate:
 
 - `.IMPORT` / `.EXPORT` / `.RUN` reference external files. They are **surfaced as warnings and
   never stored**, so file-based data movement is invisible to the graph. Read those warnings —
@@ -90,6 +123,9 @@ Only Snowflake and Databricks have it, and it reads system tables that need gran
 
 A plan holds four kinds of process. `plan.py kinds <ds>` prints the breakdown, and which of them
 has a converter today:
+
+The kinds are **a code enum** (`ProcessKind`), so this list is stable; which plugin converts
+which is a fact about this marketplace, not about the toolkit.
 
 | Kind | What it is | Converter |
 |---|---|---|

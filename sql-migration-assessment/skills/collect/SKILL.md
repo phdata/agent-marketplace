@@ -27,9 +27,15 @@ their own check below.
 
 ## Step 1 — pick the collection route
 
-**This is the decision the rest of the assessment hangs on.** Read
-`references/platform-support.md` (two levels up from this skill's directory) for the full matrix;
-the short version:
+**This is the decision the rest of the assessment hangs on.** `references/platform-support.md`
+(two levels up from this skill's directory) has the full matrix and, more importantly, the two
+one-line `grep`s that read it out of the project's own `docs/toolkit/data-source.adoc` — which
+`toolkit init` writes and which is the actual source of truth. Use those whenever the platform
+is not one of the three below, or whenever a user says a route should work that the table says
+does not: the toolkit gains platforms, and a stale "not supported" is the one error here that
+fails silently rather than loudly.
+
+The common cases, as of 2026-11-06:
 
 | Platform | Route |
 |---|---|

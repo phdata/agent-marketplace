@@ -26,7 +26,11 @@ migration-plan/<ds>/plan.txt + inventory.csv        (the plan of record)
 ## The collection route is the whole decision
 
 It differs per platform more than anything else, and getting it wrong is the usual reason an
-assessment stalls:
+assessment stalls. This table is a snapshot from **2026-11-06**; the live answer is in the
+project's own `docs/toolkit/data-source.adoc`, which `toolkit init` writes, and
+[references/platform-support.md](references/platform-support.md) carries the two `grep`s that
+read it out. Check there before telling anyone a route is impossible — the toolkit gains
+platforms, and a stale "not supported" is the one error here that fails silently.
 
 | Platform | `collect remote` | `collect script` | `collect history` |
 |---|---|---|---|

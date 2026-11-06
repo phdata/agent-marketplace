@@ -4,7 +4,12 @@ Mechanics behind `/procedure-etl-conversion:convert`.
 
 ## What the toolkit supports, exactly
 
-Both of these are closed sets enforced in the extractor, not preferences:
+Both of these are closed sets **enforced in the extractor's code**, not preferences — and that
+distinction matters for how far to trust this page. A code-enforced limit fails loudly with the
+message quoted below, so a stale copy here corrects itself the moment anyone runs the command.
+Contrast the per-platform collection matrix in `sql-migration-assessment`, which comes from the
+toolkit's docs and can drift silently; that one is worth re-reading from
+`docs/toolkit/data-source.adoc` rather than trusting any plugin's copy.
 
 | | Supported | Not supported |
 |---|---|---|
