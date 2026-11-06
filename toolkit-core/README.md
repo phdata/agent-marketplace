@@ -108,6 +108,26 @@ prints a useful message on a machine whose `PATH` is half-broken, which is exact
 called. On Windows, where it does not run, invoke `python toolkit_check.py` (or
 `py -3 toolkit_check.py`) directly; the session-start line names the interpreter.
 
+## Platform support
+
+| | macOS / Linux | Windows |
+|---|---|---|
+| `toolkit_check.py`, `toolkit_setup.py` and every other plugin's scripts | yes | yes — run them with `python` or `py -3` |
+| `scripts/toolkit-check` (the sh launcher) | yes | only under Git Bash or WSL; **not** cmd or PowerShell |
+| The `SessionStart` hook, which invokes that launcher | yes | not on native cmd/PowerShell — see below |
+
+The Python is portable by construction: standard library only, `pathlib` for every path, no
+POSIX-only modules, and the Windows batch launcher (`toolkit.bat`) is recognized alongside the
+shell one when looking for an extracted install. Output is also hardened for Windows consoles:
+they default to the locale encoding, which cannot represent an arrow in a join path or the
+toolkit's own status glyphs, so the scripts degrade those to `?` rather than dying with
+`UnicodeEncodeError` mid-report.
+
+**The gap is the hook, not the scripts.** On native Windows the SessionStart hook cannot run a
+POSIX `sh` script, so the line that announces the script paths and the interpreter never prints.
+Everything still works — skills just have to be told where the scripts are. Point them at
+`<plugin>/scripts/toolkit_check.py` and run it with `python`. Git Bash and WSL are unaffected.
+
 ## Hook
 
 A `SessionStart` hook runs `scripts/toolkit-check --hook` (the launcher). It always prints the

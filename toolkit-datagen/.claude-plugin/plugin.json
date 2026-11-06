@@ -1,7 +1,7 @@
 {
   "name": "toolkit-datagen",
   "description": "Generate synthetic, fake, mock, or test data with phData Toolkit datagen: the agent writes a small data spec (tables, columns, foreign keys, row ratios, distributions) and the toolkit generates related tables at any volume to CSV files or straight into a database, reproducibly via a seed. Includes cloning the shape of an existing database with datagen scan, without copying any real rows.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "phData" },
   "dependencies": [
     { "name": "toolkit-core", "version": "^0.3" }

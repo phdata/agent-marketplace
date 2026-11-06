@@ -38,6 +38,17 @@ import re
 import sys
 from pathlib import Path
 
+# Windows consoles, and any redirected output, default to the locale encoding - cp1252 on
+# most Western installs - which cannot represent characters that routinely show up in the
+# text these scripts print back: arrows in a join path, the toolkit's own status glyphs,
+# CJK in a table or column name. Printing one raises UnicodeEncodeError and kills the
+# script mid-report, so degrade to a replacement character instead of dying.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(errors="replace")
+    except (AttributeError, ValueError):  # not a TextIOWrapper (captured/replaced stream)
+        pass
+
 MAPPING_KIND = "INFORMATICA_MAPPING"
 # Every character a directory name may keep; anything else becomes '_'. Mirrors the
 # `tr -c 'A-Za-z0-9._-' '_'` this script replaced, so wave directory names do not change.

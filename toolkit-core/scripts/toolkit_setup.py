@@ -46,6 +46,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import toolkit_check  # noqa: E402
 
+# Windows consoles, and any redirected output, default to the locale encoding - cp1252 on
+# most Western installs - which cannot represent characters that routinely show up in the
+# text these scripts print back: arrows in a join path, the toolkit's own status glyphs,
+# CJK in a table or column name. Printing one raises UnicodeEncodeError and kills the
+# script mid-report, so degrade to a replacement character instead of dying.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(errors="replace")
+    except (AttributeError, ValueError):  # not a TextIOWrapper (captured/replaced stream)
+        pass
+
 INSTALL_URL = "https://repo.phdata.io/toolkit-cli/install.sh"
 INSTALL_DOCS = "https://toolkit.phdata.io/docs/toolkit-cli#installation"
 
@@ -59,6 +70,27 @@ CANDIDATE_GLOBS = (
 
 LLM_BLOCK = re.compile(r"llmClient\s*\{")
 LLM_TYPE = re.compile(r"type\s*=\s*(.+)")
+
+
+# The CLI ships a shell launcher and a Windows batch one side by side, so an extracted
+# install is identified by whichever of these it contains - looking only for `toolkit`
+# finds nothing on Windows.
+TOOLKIT_NAMES = ("toolkit", "toolkit.bat", "toolkit.cmd", "toolkit.exe")
+
+
+def toolkit_binary(directory):
+    """The toolkit launcher inside `directory`, or None.
+
+    The executable bit is only consulted where it means something: on Windows every file
+    reports as executable to os.access, so requiring it there would be noise either way.
+    """
+    for name in TOOLKIT_NAMES:
+        candidate = directory / name
+        if not candidate.is_file():
+            continue
+        if os.name == "nt" or os.access(candidate, os.X_OK):
+            return candidate
+    return None
 
 
 def first_line(text):
@@ -103,8 +135,7 @@ def candidate_install():
         if not base.is_dir():
             continue
         for directory in base.glob(pattern):
-            binary = directory / "toolkit"
-            if not (directory.is_dir() and binary.is_file() and os.access(binary, os.X_OK)):
+            if not (directory.is_dir() and toolkit_binary(directory)):
                 continue
             mtime = directory.stat().st_mtime
             if mtime > best_mtime:
@@ -212,9 +243,13 @@ def cmd_install(_args):
 
 def cmd_path(args):
     install_dir = Path(args.directory.rstrip("/\\")).expanduser()
-    binary = install_dir / "toolkit"
-    if not (binary.is_file() and os.access(binary, os.X_OK)):
-        sys.stderr.write("error: no executable 'toolkit' in {}\n".format(install_dir))
+    binary = toolkit_binary(install_dir)
+    if binary is None:
+        sys.stderr.write(
+            "error: no toolkit launcher ({}) in {}\n".format(
+                ", ".join(TOOLKIT_NAMES), install_dir
+            )
+        )
         return 1
     # Delegates rc-file editing to the toolkit's managed-section logic (bash/zsh).
     probe = run([str(binary), "admin", "shell"])
