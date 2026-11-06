@@ -90,8 +90,8 @@ never runs `toolkit auth` (credentials are the user's to enter).
 
 ### `toolkit-check` — the launcher, and the Python check
 
-`scripts/toolkit-check` is a ~60-line POSIX `sh` script and the only thing here that is not
-Python. It exists because of one unavoidable gap: **you cannot run a Python script to find out
+`scripts/toolkit-check` is a ~60-line POSIX `sh` script, with `scripts/toolkit-check.cmd` as
+its `cmd` twin for Windows. They are the only things here that are not Python. It exists because of one unavoidable gap: **you cannot run a Python script to find out
 whether Python is installed.** It holds no logic — it resolves an interpreter (`python3`, then
 `python`, then `py -3`) and hands every argument straight to `toolkit_check.py`.
 
@@ -110,11 +110,12 @@ called. On Windows, where it does not run, invoke `python toolkit_check.py` (or
 
 ## Platform support
 
-| | macOS / Linux | Windows |
-|---|---|---|
-| `toolkit_check.py`, `toolkit_setup.py` and every other plugin's scripts | yes | yes — run them with `python` or `py -3` |
-| `scripts/toolkit-check` (the sh launcher) | yes | only under Git Bash or WSL; **not** cmd or PowerShell |
-| The `SessionStart` hook, which invokes that launcher | yes | not on native cmd/PowerShell — see below |
+| | macOS / Linux | Windows + Git Bash | Windows, no Git Bash |
+|---|---|---|---|
+| `toolkit_check.py`, `toolkit_setup.py` and every other plugin's scripts | yes | yes | yes — run them with `python` or `py -3` |
+| `scripts/toolkit-check` (sh launcher) | yes | yes | no — use `toolkit-check.cmd` |
+| `scripts/toolkit-check.cmd` (Windows launcher) | n/a | n/a | yes |
+| The `SessionStart` hook | yes | yes | needs one settings entry, below |
 
 The Python is portable by construction: standard library only, `pathlib` for every path, no
 POSIX-only modules, and the Windows batch launcher (`toolkit.bat`) is recognized alongside the
@@ -123,10 +124,39 @@ they default to the locale encoding, which cannot represent an arrow in a join p
 toolkit's own status glyphs, so the scripts degrade those to `?` rather than dying with
 `UnicodeEncodeError` mid-report.
 
-**The gap is the hook, not the scripts.** On native Windows the SessionStart hook cannot run a
-POSIX `sh` script, so the line that announces the script paths and the interpreter never prints.
-Everything still works — skills just have to be told where the scripts are. Point them at
-`<plugin>/scripts/toolkit_check.py` and run it with `python`. Git Bash and WSL are unaffected.
+Claude Code runs hook commands through **bash by default — including on Windows, as long as Git
+Bash is present** — and falls back to PowerShell only on a Windows machine without it. So the sh
+launcher covers every common setup, and the shipped `hooks.json` needs no platform branching.
+
+**Windows without Git Bash** is the one case the shipped hook cannot serve: under PowerShell,
+`${CLAUDE_PLUGIN_ROOT}` reads as an undefined PowerShell variable, and PowerShell cannot run the
+sh launcher anyway. `scripts/toolkit-check.cmd` is there for that case — the same launcher,
+written for `cmd`, resolving `py -3` / `python` / `python3`. Wire it up by adding one entry to
+your own `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\toolkit-check.cmd\" --hook"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+That entry is deliberately **not** in the plugin's own `hooks.json`: it would run on macOS and
+Linux too, where `pwsh` is usually absent, and a hook that fails in every session is worse than
+one that is missing in a rare one. Without it, nothing breaks — the announcement line simply does
+not print, and skills fall back to their documented path (`<plugin>/scripts/toolkit_check.py`,
+run with `python`).
 
 ## Hook
 
