@@ -1,0 +1,48 @@
+# A hierarchy inside one table: employee.manager_id points at employee.employee_id.
+#
+# An unqualified foreignKey (just the column name) means the same table.
+# `SANDBOX.HR.EMPLOYEE.EMPLOYEE_ID` here would mean exactly the same thing.
+#
+# Two behaviors to expect, both inherent to generating a self-reference in one pass:
+#   - the first row's manager_id equals its own employee_id, because there are no
+#     earlier rows to point at
+#   - every other row draws its manager from the last 100 rows generated, so managers
+#     are always numerically near their reports rather than spread across the table
+# Neither affects joinability — every manager_id is a real employee_id.
+sourceType: snowflake
+tables:
+  - name: EMPLOYEE
+    database: SANDBOX
+    schema: HR
+    rows: 300
+    columns:
+      - name: EMPLOYEE_ID
+        primaryKey: true
+        provider: NumberSequence
+        config:
+          start: 1
+          step: 1
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+
+      - name: FULL_NAME
+        provider: FullName
+        dataType: VARCHAR
+        precision: 100
+
+      - name: JOB_TITLE
+        provider: JobTitle
+        dataType: VARCHAR
+        precision: 80
+
+      - name: HIRE_DATE
+        provider: RandomDate
+        dataType: DATE
+
+      # The handful of people at the top of the org have no manager: nullable plus a
+      # density below 1.0 leaves roughly 3% of rows null.
+      - name: MANAGER_ID
+        nullable: true
+        density: 0.97
+        foreignKey: EMPLOYEE_ID

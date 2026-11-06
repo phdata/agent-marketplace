@@ -1,6 +1,6 @@
 ---
 name: collect
-description: Copy in a supplied directory of exported Informatica PowerCenter XML and import it into the toolkit with ds collect etl, after analyzer reconnaissance that checks the export for completeness, plus an optional legacy source-database scan. Use when starting an Informatica conversion assessment, when the user has a directory of PowerCenter exports to analyze, or asks how to get Informatica mappings into the toolkit.
+description: Copy in a supplied directory of exported Informatica PowerCenter XML and import it into the toolkit with collect etl, after analyzer reconnaissance that checks the export for completeness, plus an optional legacy source-database scan. Use when starting an Informatica conversion assessment, when the user has a directory of PowerCenter exports to analyze, or asks how to get Informatica mappings into the toolkit.
 ---
 
 # Collect: PowerCenter XML → toolkit ETL store
@@ -71,14 +71,15 @@ is the real completeness check.
 Count the mappings — one `MAPPING` element each, and several can share a file:
 
 ```bash
-<plugin>/scripts/infa-corpus count            # defaults to ./informatica-xml
+python3 <plugin>/scripts/infa_corpus.py count            # defaults to ./informatica-xml
 ```
 
 This plugin bundles small scripts in its `scripts/` directory (two levels up from this
 skill's directory) that own the fiddly parsing — the mapping-name regex and the plan
-snapshot's jq paths. They are not on PATH; invoke them by path from the plugin
-directory. Prefer them over retyping the patterns: the regex has three easy-to-miss
-details, and getting any of them wrong fails silently.
+snapshot's shape. They are not on PATH; invoke them by path from the plugin directory,
+with whichever Python 3 is available (`python3`, or `python`/`py` on Windows). Prefer them
+over retyping the patterns: the regex has three easy-to-miss details, and getting any of
+them wrong fails silently.
 
 
 **Around 20 mappings or fewer, ask the user which route they want** — don't assume. The full
@@ -87,7 +88,7 @@ than it's worth:
 
 | | Full assessment | Direct conversion |
 |---|---|---|
-| Steps | this skill → `:lineage` → `:plan` → `:wave` per group | this skill → `:wave` once |
+| Steps | this skill → `:lineage` → `:plan` → `/informatica-etl-conversion:wave` per group | this skill → `/informatica-etl-conversion:wave` once |
 | You get | dependency-ordered waves, dead/audit/interface detection, complexity and risk scores, cutover constraints between groups | the converted pipelines, nothing about ordering |
 | Also needs | a legacy datasource (real or stub), and the corpus imported | nothing but the corpus |
 | Worth it when | mappings feed each other, the mappings are unfamiliar, or someone needs a migration schedule | the mappings are few and independent enough to hold in your head |
@@ -103,6 +104,12 @@ Say which route was chosen before continuing.
   etl-extract` reads the XML directly and never touches the collect store or a datasource.
   Then go straight to `/informatica-etl-conversion:wave` and tell it there's no plan.
 - **Full assessment** — continue through every step below.
+
+Converting is the separate **informatica-etl-conversion** plugin, which needs an LLM and an
+agent license where nothing in this plugin does. Mention that once, when the route is chosen,
+rather than at the end — if it isn't installed, the user wants to know before spending the
+assessment. It reads this skill's `informatica-xml/` corpus and `:plan`'s output straight off
+disk, so nothing has to be handed over.
 
 ## Step 3 — analyzer reconnaissance (optional, recommended)
 
@@ -166,7 +173,7 @@ explain that these mappings can't be collected today.
 ## Step 5 — import the corpus
 
 ```bash
-toolkit ds collect etl legacy_dw --type=INFORMATICA -i informatica-xml --replace-all
+toolkit collect etl legacy_dw --type=INFORMATICA -i informatica-xml --replace-all
 ```
 
 - Never connects to the datasource; its configured type only picks the SQL dialect.
@@ -196,10 +203,10 @@ show up as table sizes in the plan. Note for Teradata: no dedicated scanner, so 
 to generic JDBC metadata — it works, with lower fidelity. The **target warehouse is not
 scanned** in this phase.
 
-Command reference for everything above: `docs/toolkit/data-source.adoc` (`ds collect etl`,
+Command reference for everything above: `docs/toolkit/data-source.adoc` (`collect etl`,
 `ds scan`, datasource config and filters) and `docs/toolkit/analyzer.adoc`, both written into
 the project by `toolkit init`. Prefer them over guessing at syntax; use `--help` for exact
 flags.
 
-Then hand off to `/informatica-etl-conversion:lineage` (full assessment) or
+Then hand off to `/informatica-assessment:lineage` (full assessment) or
 `/informatica-etl-conversion:wave` (direct conversion).

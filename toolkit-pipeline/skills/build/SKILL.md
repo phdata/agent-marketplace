@@ -110,6 +110,10 @@ assertions?
   then the `initial_load_*.sql` transform.
 - **Seed synthetic data** (e.g. into a dev/test schema):
   `toolkit datagen jdbc <datasource> pipeline-out/<name>/mockdata/datagen-spec.yaml`
+  — note `--mode` defaults to `replace`, which creates-or-replaces the target tables. For
+  tuning that spec (row counts and ratios, value sets, relationships the generator couldn't
+  infer), validating it before spending a run, or writing CSV instead of loading tables, use
+  `/toolkit-datagen:generate`, which takes an existing spec as its starting point.
 - **Run the generated tests**:
   `toolkit ds exec <datasource> --file <a test .sql under pipeline-out/<name>/tests/>` — a
   failing test returns rows; empty results mean pass.

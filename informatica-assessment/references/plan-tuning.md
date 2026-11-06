@@ -27,8 +27,9 @@ waves[]{ number, groups[]{ name, wave, foundation, scores,
 plumbing[]
 ```
 
-Wave numbers do not necessarily start at 0, and `processes`/`tables` can be absent on a group —
-use `(.processes // [])` in every jq expression.
+Wave numbers do not necessarily start at 0, and `processes`/`tables` can be absent on a group.
+`scripts/infa_plan.py` handles both, plus filtering to `INFORMATICA_MAPPING` processes — read the
+snapshot through it rather than reaching into the JSON by hand.
 
 `inventory.csv` columns: `wave, group, object_type, name, kind, patterns, tables, calls,
 statements, ctes, fatal_diagnostics, error_diagnostics, components, component_types,

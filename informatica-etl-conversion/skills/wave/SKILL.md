@@ -5,20 +5,32 @@ description: Convert Informatica mappings into pipelines end to end — one migr
 
 # Wave: plan group → generated pipelines
 
-Runs in one of two modes, decided back in `/informatica-etl-conversion:collect` (Step 2):
+Runs in one of two modes:
 
-- **Planned** (default) — one **plan group** per run; a wave is its groups in sequence. Groups
-  within a wave are independent by construction, so one group is also the right size for a
-  review queue: one schema or domain, one reviewer's competence. Groups the plan marks as
-  co-migrating (a dependency cycle) run together as a single combined group.
-- **Direct** — no plan exists; the whole corpus is converted in one run. Chosen when there are
-  few mappings. Everything below is identical except Step 1 (where the mapping list comes from) and
+- **Planned** — one **plan group** per run; a wave is its groups in sequence. Groups within a
+  wave are independent by construction, so one group is also the right size for a review queue:
+  one schema or domain, one reviewer's competence. Groups the plan marks as co-migrating (a
+  dependency cycle) run together as a single combined group.
+- **Direct** — no plan; the whole corpus is converted in one run. Right when there are few
+  mappings. Everything below is identical except Step 1 (where the mapping list comes from) and
   Step 2 (what gets staged); the dry-run gate, review queue, build, and report are unchanged.
 
-If it isn't obvious which mode applies, check for `migration-plan/<ds>/` — and ask rather than
-guessing, since a plan may exist that the user has chosen not to follow.
+The plan comes from the separate **informatica-assessment** plugin
+(`/informatica-assessment:plan`), which writes `migration-plan/<ds>/plan.txt` and a snapshot.
+This plugin reads those files if they are there and needs nothing else from it — direct mode is
+a complete path on its own.
 
-Unlike the assessment skills, this one needs an LLM and an agent license.
+```bash
+ls -d migration-plan/*/ 2>/dev/null
+```
+
+A plan present means planned mode, but **ask rather than assume** — a user may have a plan and
+deliberately not be following it. No plan and a corpus past roughly 50 mappings: say once that
+the assessment (dependency-ordered waves, dead-code and interface detection, complexity and risk
+scores) is free, needs no LLM, and would otherwise be someone's manual sequencing problem later.
+Then do what they ask.
+
+Unlike the assessment plugin's skills, this one needs an LLM and an agent license.
 
 ## Step 0 — preflight and gates
 
@@ -33,6 +45,21 @@ toolkit-core's scripts are not on PATH (plugin `bin/` directories aren't permitt
 paths into the session at startup. Use that path; if the hook didn't run, the script is
 `scripts/toolkit-check` in the installed toolkit-core plugin directory.
 
+- **The corpus**: everything below reads PowerCenter XML from `informatica-xml/` in the toolkit
+  project. If it isn't there, ask for the directory of exported XML and copy it in, **preserving
+  the directory structure exactly as exported**:
+
+  ```bash
+  cp -R <export-dir>/ informatica-xml/
+  ```
+
+  Structure matters because the directory holding each file is the `<folder>` segment of a plan
+  process id (`informatica/<folder>/<mapping>`), which is what keeps same-named mappings from
+  different repository folders apart and what Step 1 uses to disambiguate a mapping found in
+  several files. A flat export works too. Don't rename directories inside `informatica-xml/`
+  after an import — in planned mode that changes process ids and can strand a running plan.
+  `references/corpus-guide.md` in the informatica-assessment plugin covers what a usable export
+  contains; producing the export is the Informatica team's job, not a step here.
 - **Target datasource**: this is a *different* datasource from the legacy one used for
   assessment — the warehouse the pipelines will be built against. Establish which one it is
   before anything else, and confirm it with the user rather than inferring it from the
@@ -96,35 +123,36 @@ wave directory is `waves/all/`, holding outputs only. Count what's about to be c
 user sees the scope:
 
 ```bash
-<plugin>/scripts/infa-corpus count
+python3 <plugin>/scripts/infa_corpus.py count
 ```
 
 **Planned mode:**
 
 ```bash
-<plugin>/scripts/infa-plan groups legacy_dw                    # wave, group, mappings, tables
-<plugin>/scripts/infa-plan processes legacy_dw <wave> <group>  # this group's mapping names
+python3 <plugin>/scripts/infa_plan.py groups legacy_dw                    # wave, group, mappings, tables
+python3 <plugin>/scripts/infa_plan.py processes legacy_dw <wave> <group>  # this group's mapping names
 ```
 
 **Check the group's size before going further.** The review queue in Step 6 is per group, and
 a group's mappings all land in it at once. Real migrations produce lopsided groups — a 121-group
 Teradata plan had a median of a few mappings but one group with 83. Past roughly 20 mappings,
 say so and offer the choice: re-cut the plan with a smaller `--max-group-size` (back to
-`/informatica-etl-conversion:plan`), or proceed knowing the review queue will be long and is
+`/informatica-assessment:plan`), or proceed knowing the review queue will be long and is
 best worked in one sitting. Discovery cost scales the same way — one run per spec.
 
 Then locate each mapping's XML by **content** — export filenames often don't match mapping
 names, so a filename search misses most of them:
 
 ```bash
-<plugin>/scripts/infa-corpus find <mapping>
+python3 <plugin>/scripts/infa_corpus.py find <mapping>
 ```
 
 This plugin bundles small scripts in its `scripts/` directory (two levels up from this
 skill's directory) that own the fiddly parsing — the mapping-name regex and the plan
-snapshot's jq paths. They are not on PATH; invoke them by path from the plugin
-directory. Prefer them over retyping the patterns: the regex has three easy-to-miss
-details, and getting any of them wrong fails silently.
+snapshot's shape. They are not on PATH; invoke them by path from the plugin directory,
+with whichever Python 3 is available (`python3`, or `python`/`py` on Windows). Prefer them
+over retyping the patterns: the regex has three easy-to-miss details, and getting any of
+them wrong fails silently.
 
 When several files match one mapping, prefer the one whose parent directory equals the
 `<folder>` segment of the process id. Unmatched mappings: show them to the user with the likely
@@ -140,13 +168,13 @@ Step 3 — `waves/all/` holds outputs only.
 **Planned mode:**
 
 ```bash
-WAVE="waves/$(<plugin>/scripts/infa-plan wave-id <wave> '<group>')"
+WAVE="waves/$(python3 <plugin>/scripts/infa_plan.py wave-id <wave> '<group>')"
 SRC="$WAVE/xml"
 mkdir -p "$SRC"
 cp <matched files> "$SRC/"          # prefix with the folder name on filename collisions
 ```
 
-`infa-plan wave-id` sanitizes the group name for use as a directory — plan groups are named
+`infa_plan.py wave-id` sanitizes the group name for use as a directory — plan groups are named
 things like `(default)`, which becomes `_default_`.
 
 Stage **copies into one directory and run `etl-extract` once over it**: the run makes a single
@@ -240,28 +268,46 @@ review time on it.
 This is where the group pays off: the same Informatica idiom appears across many mappings, so
 one decision resolves many items at once.
 
-1. **Aggregate** every open item across the group's contracts. An item is just
-   `{description, comment}` — its kind is a `[TAG]` prefix on the description:
+1. **Collapse the group's items into one list of distinct questions.** An item is
+   `{description, comment, resolverNote?}` — its kind is a `[TAG]` prefix on the description:
 
    ```bash
-   for c in "$WAVE"/discovery-out/*/data-contract.json; do
-     jq -r --arg c "$c" '.sourceToTarget.humanReviewItems[]?
-         | [$c, .description] | @tsv' "$c"
-   done
+   python3 <plugin>/scripts/review_queue.py list --dir "$WAVE/discovery-out"
    ```
 
-   Also read each `discovery-report.txt` — the `ITEMS REQUIRING YOUR REVIEW` section states
-   each item in prose, which is what to show the user.
+   Bundled in this plugin's `scripts/` directory (two levels up from this skill's directory);
+   invoke it by path, since plugin scripts aren't on PATH. Python 3 standard library only, so
+   it behaves the same on Windows (`python`/`py`), macOS, and Linux. It buckets items by tag
+   plus the shape of the description — identifiers, literals and numbers replaced — so the
+   same question about different mappings lands in one group, biggest group first.
 
-2. **Present by tag, then by target table** — `[LOW CONFIDENCE]`, `[UNMAPPED]`,
-   `[COMPLEX TRANSFORM]`, `[ASSERTION FAILED]` and the rest; what each one is asking is
-   tabulated in the runbook. Group identical-looking items and propose one decision for the
-   set ("every `TO_DATE(..., 'MM/DD/YYYY')` becomes `TRY_TO_DATE`, null on failure — agreed?").
-   Capture decisions in the user's own words.
+   Tell the user the ratio: a wave of 40 contracts routinely collapses to a handful of real
+   decisions, and that ratio is what makes a long queue workable in one sitting.
 
-3. **Write the decisions** into each affected contract's
-   `sourceToTarget.humanReviewItems[].comment`, leaving items the user had no opinion on
-   untouched.
+   Also read each `discovery-report.txt` for the mappings the user cares most about — the
+   `ITEMS REQUIRING YOUR REVIEW` section states each item in prose, and CRITICAL warnings
+   don't appear in the queue at all.
+
+2. **Work the list in order, biggest group first.** `review_queue.py show <n>` prints every
+   item in a group with its contract and full description — always read that before deciding,
+   to confirm the group is one question and not two that share a shape. Then put one proposal
+   to the user ("every `TO_DATE(..., 'MM/DD/YYYY')` becomes `TRY_TO_DATE`, null on failure —
+   agreed?"), and capture the answer in their own words. What each tag is asking is tabulated
+   in the runbook.
+
+3. **Write the decision across the whole group at once:**
+
+   ```bash
+   python3 <plugin>/scripts/review_queue.py comment <n> "<the user's decision>" \
+       --dir "$WAVE/discovery-out"
+   ```
+
+   It writes the `comment` field of every member item in every affected contract, preserving
+   key order and formatting (`--dry-run` previews, `--overwrite` replaces existing comments).
+   Leave groups the user had no opinion on uncommented — they stay queued rather than guessed
+   at. Consistency is not cosmetic here: the resolver applies items that ask for the same
+   change, but leaves an item open when its amendments contradict how an earlier item changed
+   the same mapping or join.
 
 4. **Sweep the whole group**:
 
@@ -279,9 +325,13 @@ one decision resolves many items at once.
    when none remain. Contracts without comments pass through unchanged, so sweeping them all is
    safe.
 
-5. **Re-aggregate and repeat** until every contract is approved. Target tooling, platform, and
-   columns are structurally locked — a comment can't change the target schema, so a genuinely
-   wrong target means going back to Step 4, not commenting harder.
+5. **Re-queue and repeat** until every contract is approved
+   (`review_queue.py status --dir "$WAVE/discovery-out"` gives the per-contract view). Each
+   commented item is all-or-nothing: one the resolver refused comes back flagged
+   `NOT APPLIED` with its reason, and the next comment has to address that reason rather than
+   restate the decision. Target tooling, platform, and columns are structurally locked — a
+   comment can't change the target schema, so a genuinely wrong target means going back to
+   Step 4, not commenting harder.
 
 ## Step 7 — build
 
@@ -290,7 +340,8 @@ for d in "$WAVE"/discovery-out/*/; do
   name=$(basename "$d")
   contract="$d/data-contract.json"
   [ -f "$WAVE/pipeline-out/$name/build-report.txt" ] && continue      # already built
-  [ "$(jq -r '.approvedByHuman' "$contract")" = "true" ] || continue  # unapproved
+  python3 -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get("approvedByHuman") else 1)' \
+      "$contract" || continue                                         # unapproved
   toolkit agent pipeline-build <target-ds> \
       --contract "$contract" --output "$WAVE/pipeline-out/$name"
 done

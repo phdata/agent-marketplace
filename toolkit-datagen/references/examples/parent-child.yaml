@@ -1,0 +1,105 @@
+# Related tables: customers -> orders -> order lines.
+#
+# Shows the central idea of a multi-table spec: only the root table counts rows.
+# Children declare how many rows they get *per parent row* with rowGenerator.range,
+# which is what makes the result joinable and the ratios realistic.
+#
+#   200 customers
+#   x 1..5 orders each       -> ~600 orders
+#   x 1..6 lines each        -> ~2,100 order lines
+#
+# Scale the whole thing with --scale (it multiplies `rows`, not `range`):
+#   toolkit datagen file parent-child.yaml --output out --mode create --seed 7 --scale 50
+sourceType: snowflake
+tables:
+  - name: CUSTOMER
+    database: SANDBOX
+    schema: DEMO
+    rows: 200
+    columns:
+      - name: CUSTOMER_ID
+        primaryKey: true
+        provider: UUIDv7
+        dataType: VARCHAR
+        precision: 36
+      - name: FULL_NAME
+        provider: FullName
+        dataType: VARCHAR
+        precision: 100
+      - name: CITY
+        provider: Address.city
+        dataType: VARCHAR
+        precision: 60
+      - name: STATE
+        provider: Address.state
+        dataType: VARCHAR
+        precision: 40
+
+  - name: ORDERS
+    database: SANDBOX
+    schema: DEMO
+    rowGenerator:
+      # 1 to 5 orders per customer, inclusive on both ends.
+      range: 1..5
+    columns:
+      - name: ORDER_ID
+        primaryKey: true
+        provider: UUIDv7
+        dataType: VARCHAR
+        precision: 36
+      # A foreign key column takes no provider, no transform, and no dataType —
+      # it inherits dataType, precision, scale, and jdbcType from the column it
+      # references. The reference is the fully qualified parent column.
+      - name: CUSTOMER_ID
+        foreignKey: SANDBOX.DEMO.CUSTOMER.CUSTOMER_ID
+      - name: ORDERED_AT
+        provider: RandomTimestamp
+        dataType: TIMESTAMP_NTZ
+      - name: STATUS
+        provider: Enum
+        config:
+          values:
+            SHIPPED: 0.8
+            PENDING: 0.15
+            CANCELLED: 0.05
+        dataType: VARCHAR
+        precision: 20
+
+  - name: ORDER_LINE
+    database: SANDBOX
+    schema: DEMO
+    rowGenerator:
+      # `1..6 step 2` would restrict this to 1, 3, or 5 lines per order.
+      range: 1..6
+    columns:
+      - name: ORDER_ID
+        foreignKey: SANDBOX.DEMO.ORDERS.ORDER_ID
+      - name: LINE_NUMBER
+        provider: NumberSequence
+        config:
+          start: 1
+          step: 1
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+      - name: PRODUCT_NAME
+        provider: ProductName
+        dataType: VARCHAR
+        precision: 80
+      - name: QUANTITY
+        provider: RandomNumber
+        config:
+          min: 1
+          max: 12
+        dataType: NUMBER
+        precision: 4
+        scale: 0
+      - name: UNIT_PRICE
+        provider: Currency
+        config:
+          min: 1
+          max: 500
+          scale: 2
+        dataType: NUMBER
+        precision: 10
+        scale: 2

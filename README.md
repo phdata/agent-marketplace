@@ -10,7 +10,15 @@ so engineering repos don't each carry their own `.claude/skills/`.
 |---|---|
 | [toolkit-core](toolkit-core/) | Toolkit CLI foundation: install, PATH setup, project init, JDBC connection/datasource configuration. Required by all other toolkit plugins. |
 | [toolkit-pipeline](toolkit-pipeline/) | Dataspec-driven pipeline generation via `toolkit agent discovery` and `toolkit agent pipeline-build`: SQL, dbt, or PySpark transforms plus data-quality tests and a synthetic-data spec. |
-| [informatica-etl-conversion](informatica-etl-conversion/) | Informatica PowerCenter conversion: survey the mappings (collect, lineage, `migration plan`) and convert them wave by wave via `agent etl-extract`, discovery with a grouped review queue, and pipeline-build — or convert a handful of mappings in a single pass. |
+| [toolkit-datagen](toolkit-datagen/) | Synthetic, fake, mock, and test data via `toolkit datagen`: the agent writes a data spec, the toolkit generates related tables at any volume to CSV or straight into a database, reproducibly via a seed. Also clones the shape of an existing database without copying rows. |
+| [informatica-assessment](informatica-assessment/) | Assess an Informatica PowerCenter estate: export completeness, `collect etl`, `ds lineage`, and `migration plan` into dependency-ordered scored waves with an inventory. Offline-capable; no LLM or agent license. |
+| [informatica-etl-conversion](informatica-etl-conversion/) | Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines: `agent etl-extract` behind a dry-run cost gate, discovery with a grouped human-review queue, and pipeline-build — one migration-plan group at a time, or a small corpus in a single pass. |
+
+The two Informatica plugins split along the line where the cost does: everything in
+`informatica-assessment` is free and needs no LLM, while every conversion step is
+license-gated and spends tokens. Either installs and runs without the other —
+`informatica-etl-conversion` reads a plan off disk when there is one and converts the whole
+corpus in one pass when there isn't.
 
 ## Install — Claude Code
 
@@ -20,11 +28,14 @@ Inside Claude Code:
 /plugin marketplace add phdata/agent-marketplace
 /plugin install toolkit-core@phdata
 /plugin install toolkit-pipeline@phdata
+/plugin install toolkit-datagen@phdata
+/plugin install informatica-assessment@phdata
 /plugin install informatica-etl-conversion@phdata
 ```
 
-Dependencies install automatically from this marketplace: `toolkit-pipeline` pulls in
-`toolkit-core`, and `informatica-etl-conversion` pulls in both.
+Dependencies install automatically from this marketplace: `toolkit-pipeline`,
+`toolkit-datagen`, and `informatica-assessment` each pull in `toolkit-core`, and
+`informatica-etl-conversion` pulls in `toolkit-core` and `toolkit-pipeline`.
 
 For team/repo-wide auto-install, check a `.claude/settings.json` into the consuming repo —
 see [docs/team-setup.md](docs/team-setup.md).
@@ -37,6 +48,8 @@ plugin by its subdirectory:
 ```
 cortex plugin install github:phdata/agent-marketplace/toolkit-core
 cortex plugin install github:phdata/agent-marketplace/toolkit-pipeline
+cortex plugin install github:phdata/agent-marketplace/toolkit-datagen
+cortex plugin install github:phdata/agent-marketplace/informatica-assessment
 cortex plugin install github:phdata/agent-marketplace/informatica-etl-conversion
 ```
 
@@ -44,8 +57,8 @@ Notes:
 
 - Append `@<branch>` to pin a branch (e.g. `github:phdata/agent-marketplace/toolkit-core@feature/initial_plugin`
   while testing pre-release changes); the subdirectory path goes *before* the `@`.
-- Cortex does not auto-install dependencies — install `toolkit-core` explicitly alongside
-  `toolkit-pipeline`, and all three for `informatica-etl-conversion`.
+- Cortex does not auto-install dependencies — install `toolkit-core` explicitly alongside any
+  other plugin, plus `toolkit-pipeline` for `informatica-etl-conversion`.
 - `cortex plugin update` re-fetches from the pinned source; `cortex plugin list` shows what's
   installed and enabled.
 - Teams can also ship these via a Snowflake connection profile — see

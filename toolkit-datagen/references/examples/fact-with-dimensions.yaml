@@ -1,0 +1,191 @@
+# A star schema: one fact, several independent dimensions.
+#
+# READ THIS BEFORE GIVING A FACT TABLE TWO FOREIGN KEYS. When a table references more
+# than one parent, the parent rows are **zipped by position** — on each pass the fact sees
+# the 1st store with the 1st product, the 2nd with the 2nd, and so on. Declare an FK to
+# every dimension and the dimensions come out perfectly correlated: a 1,000-row fact over
+# 25 stores and 200 products yields 25 distinct (store, product) pairs, every one of them
+# store_id == product_id, and 175 products that never appear. The data joins, and it is
+# useless for anything that groups by two dimensions at once.
+#
+# So: ONE foreign key, to the dimension that defines the fact's grain (here store — "N
+# sales per store"), and every other dimension key drawn from that dimension's own key
+# domain. That gives independent combinations: the same spec below produces ~887 distinct
+# (store, product) pairs over 1,000 rows.
+#
+# Drawing a key by domain only stays referentially correct when you know the domain, which
+# is why the dimensions use NumberSequence (start 1, step 1): the keys are exactly
+# 1..rows, so a RandomNumber over the same bounds can never be an orphan. Keep the two in
+# step — raise a dimension's `rows` and you must raise the matching `max`.
+#
+#   toolkit datagen validate fact-with-dimensions.yaml --seed 1
+#   toolkit datagen file fact-with-dimensions.yaml --output out --mode create --seed 1
+sourceType: snowflake
+tables:
+  - name: DIM_STORE
+    database: SANDBOX
+    schema: RETAIL
+    rows: 25
+    columns:
+      - name: STORE_KEY
+        primaryKey: true
+        provider: NumberSequence
+        config:
+          start: 1
+          step: 1
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+      - name: STORE_NAME
+        provider: Address.city
+        dataType: VARCHAR
+        precision: 60
+      - name: REGION
+        provider: Enum
+        config:
+          values:
+            MIDWEST: 0.3
+            WEST: 0.3
+            SOUTH: 0.25
+            NORTHEAST: 0.15
+        dataType: VARCHAR
+        precision: 20
+
+  - name: DIM_PRODUCT
+    database: SANDBOX
+    schema: RETAIL
+    rows: 200
+    columns:
+      - name: PRODUCT_KEY
+        primaryKey: true
+        provider: NumberSequence
+        config:
+          start: 1
+          step: 1
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+      - name: PRODUCT_NAME
+        provider: ProductName
+        dataType: VARCHAR
+        precision: 80
+      - name: LIST_PRICE
+        provider: Currency
+        config:
+          min: 2
+          max: 500
+          scale: 2
+        dataType: NUMBER
+        precision: 10
+        scale: 2
+
+  # A conformed date dimension: one row per day, built from a sequence rather than random
+  # dates, so there are no gaps and no duplicates.
+  - name: DIM_DATE
+    database: SANDBOX
+    schema: RETAIL
+    rows: 365
+    columns:
+      - name: DATE_KEY
+        primaryKey: true
+        provider: NumberSequence
+        config:
+          start: 1
+          step: 1
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+      - name: CALENDAR_DATE
+        provider: DateSequence
+        config:
+          start: 2026-01-01
+          step: 1
+          unit: days
+        dataType: DATE
+      # Derived from CALENDAR_DATE with a transform, NOT from a date/timestamp provider.
+      # A second provider would generate its own unrelated value — `Timestamp.monthName`
+      # here reports November for the 1st of January, because it draws a fresh random
+      # timestamp rather than reading the column next to it. Any dimension attribute that
+      # has to agree with the date must be a transform over it.
+      - name: MONTH_NUMBER
+        transform:
+          function: month(cal)
+          references:
+            cal: CALENDAR_DATE
+        dataType: NUMBER
+        precision: 2
+        scale: 0
+      - name: CALENDAR_YEAR
+        transform:
+          function: year(cal)
+          references:
+            cal: CALENDAR_DATE
+        dataType: NUMBER
+        precision: 4
+        scale: 0
+
+  - name: FACT_SALES
+    database: SANDBOX
+    schema: RETAIL
+    rowGenerator:
+      # 40 sales per store per pass. The fact's grain parent is DIM_STORE, so this is the
+      # one ratio that matters; 25 stores x 40 = 1,000 fact rows.
+      range: 40
+    columns:
+      # The grain parent — a real foreign key.
+      - name: STORE_KEY
+        foreignKey: SANDBOX.RETAIL.DIM_STORE.STORE_KEY
+
+      # The other dimensions, drawn from their key domains so the combinations are
+      # independent. `uniform` matters here: the default `normal` sampler clusters draws
+      # mid-range and would barely touch the first and last keys.
+      - name: PRODUCT_KEY
+        provider: RandomNumber
+        config:
+          min: 1
+          max: 200          # == DIM_PRODUCT.rows
+          maxDecimalDigits: 0
+          sampler:
+            type: uniform
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+      - name: DATE_KEY
+        provider: RandomNumber
+        config:
+          min: 1
+          max: 365          # == DIM_DATE.rows
+          maxDecimalDigits: 0
+          sampler:
+            type: uniform
+        dataType: NUMBER
+        precision: 9
+        scale: 0
+
+      - name: QUANTITY
+        provider: RandomNumber
+        config:
+          min: 1
+          max: 12
+          maxDecimalDigits: 0
+        dataType: NUMBER
+        precision: 4
+        scale: 0
+      - name: UNIT_PRICE
+        provider: Currency
+        config:
+          min: 2
+          max: 500
+          scale: 2
+        dataType: NUMBER
+        precision: 10
+        scale: 2
+      - name: SALES_AMOUNT
+        transform:
+          function: price * qty
+          references:
+            price: UNIT_PRICE
+            qty: QUANTITY
+        dataType: NUMBER
+        precision: 12
+        scale: 2

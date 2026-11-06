@@ -2,6 +2,33 @@
 
 Mechanics behind `/informatica-etl-conversion:wave`.
 
+## The corpus
+
+Everything starts from `informatica-xml/` in the toolkit project: a directory of exported
+PowerCenter XML, copied in with its structure intact, because the directory holding each file is
+the `<folder>` segment of its plan process id. `/informatica-assessment:collect` puts it there,
+and `:wave` copies it in when that plugin isn't in play.
+
+Format facts that affect extraction, all handled rather than needing cleanup:
+
+- One `MAPPING` element per mapping, and **several mappings can share a file** — which is why
+  counts come from element matching, not `ls`, and why staging one file can drag in mappings
+  belonging to other groups (see below).
+- `DOCTYPE` declarations pointing at `powrmart.dtd` are normal; external entity resolution is
+  off and the DTD is never fetched.
+- Both `NAME="x"` and `NAME ="x"` appear in real exports, and case varies (`.xml`, `.XML`).
+- A file that fails to parse is **warned about on the console and skipped** — not fatal, and
+  recorded nowhere else. That is why the extract steps `tee` their output.
+- Non-XML files are ignored, so an export shipped alongside logs or READMEs needs no cleaning.
+- Mapping dependencies (sources, targets, mapplets, reusable transformations) must be in the
+  export, inline or as sibling files. Without them, extraction sees ports whose definitions are
+  missing and column derivations come out incomplete.
+
+What a complete export contains, and what to ask the exporter for when something is missing, is
+in `references/corpus-guide.md` in the informatica-assessment plugin. The analyzer scan in
+`/informatica-assessment:collect` is the real completeness check — worth running even on the
+direct path, since it is free and needs no datasource.
+
 ## Wave directory layout
 
 ```
@@ -31,16 +58,16 @@ names like `(default)` and `DW-2` sanitize to `_default_` and `DW-2`.
 
 Process ids are `informatica/<folder>/<mapping>`, where `<folder>` defaults to the XML file's
 parent directory name at collect time. The mapping name is the last `/`-separated segment,
-which is what `infa-plan processes` prints and `infa-corpus find` takes.
+which is what `infa_plan.py processes` prints and `infa_corpus.py find` takes.
 
 ```bash
-<plugin>/scripts/infa-plan processes <ds> <wave> '<group>'   # mapping names in the group
-<plugin>/scripts/infa-corpus find <mapping>                  # files containing that mapping
+python3 <plugin>/scripts/infa_plan.py processes <ds> <wave> '<group>'   # mapping names in the group
+python3 <plugin>/scripts/infa_corpus.py find <mapping>                  # files containing that mapping
 ```
 
 **Content matching is authoritative** — export filenames frequently don't match mapping names
 (`synthetic_dim_upsert.xml` holds `m_dim_thing_insupd`), so a filename search misses most
-mappings. `infa-corpus` owns the pattern so it isn't retyped; the three details it encodes,
+mappings. `infa_corpus.py` owns the pattern so it isn't retyped; the three details it encodes,
 each of which fails silently when dropped:
 
 - the space after `<MAPPING` excludes `<MAPPINGVARIABLE NAME="...">`, which otherwise inflates
@@ -51,7 +78,7 @@ each of which fails silently when dropped:
 
 When several files match, prefer the one whose parent directory equals the `<folder>` segment.
 
-**Nothing matched?** (`infa-corpus find` exits 4.) Likely causes, in order: a directory inside
+**Nothing matched?** (`infa_corpus.py find` exits 4.) Likely causes, in order: a directory inside
 `informatica-xml/` was renamed since the import, which also changes process ids; the mapping was
 dropped from a re-export copied over the corpus; the plan predates the current corpus. Show the
 user the unmatched ids and resolve together — the collected store keeps the original file path
@@ -60,7 +87,7 @@ but is toolkit-internal and not for querying.
 Counting the corpus (for sizing, and for direct mode's scope):
 
 ```bash
-<plugin>/scripts/infa-corpus count
+python3 <plugin>/scripts/infa_corpus.py count
 ```
 
 ## Multi-mapping files
@@ -79,14 +106,21 @@ are cached on disk under `tools/agent/etl-extract/cache/`.
 
 ## Review queue presentation
 
-A review item is `{"description": "...", "comment": ""}` — there is no category field; the kind
-is a bracket tag at the front of the description. Aggregate, then bucket by tag:
+A review item is `{"description": "...", "comment": ""}`, plus a `resolverNote` once a sweep has
+refused to apply its comment. There is no category field — the kind is a bracket tag at the
+front of the description. Collapse the whole wave into distinct questions, biggest first:
 
 ```bash
-for c in waves/<id>/discovery-out/*/data-contract.json; do
-  jq -r --arg c "$c" '.sourceToTarget.humanReviewItems[]? | [$c, .description] | @tsv' "$c"
-done
+python3 <plugin>/scripts/review_queue.py list    --dir waves/<id>/discovery-out
+python3 <plugin>/scripts/review_queue.py show    <group> --dir waves/<id>/discovery-out
+python3 <plugin>/scripts/review_queue.py comment <group> "decision" --dir waves/<id>/discovery-out
+python3 <plugin>/scripts/review_queue.py status  --dir waves/<id>/discovery-out
 ```
+
+Items bucket by tag plus the *shape* of the description (identifiers, quoted literals and
+numbers replaced by placeholders), so the same question asked about twelve different mappings
+is one group and one decision. `comment` writes that decision into every member item across
+every affected contract, preserving each file's key order and formatting.
 
 | Tag | What discovery is asking |
 |---|---|
@@ -98,6 +132,7 @@ done
 | `[ASSERTION FAILED]` | Its proposed mapping contradicts example records |
 | `[LOAD STRATEGY]` | An incremental load with no change-detection method chosen |
 | `[SPEC AMBIGUITY]` | An ambiguity `etl-extract` recorded from the original mapping — a question about the Informatica logic, not about the warehouse |
+| `[PROCEDURAL LOOP]` | The source ran this load row by row; the translated loop is reference only — the pipeline must be built set-based |
 
 The prose version of each item is in the matching `discovery-report.txt` under
 `ITEMS REQUIRING YOUR REVIEW` — read that to the user rather than raw JSON.

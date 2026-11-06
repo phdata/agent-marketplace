@@ -26,14 +26,16 @@ Check for a plan under `migration-plan/<ds>/`:
 - **Plan present** — report against it, as below.
 - **No plan but `waves/all/` exists** — this is a direct conversion (few mappings, no plan by
   choice). Skip Step 1 and report from the artifacts alone, with the corpus mapping count as
-  the denominator: `<plugin>/scripts/infa-corpus count`.
-- **Neither** — assessment hasn't gotten anywhere yet; point at
-  `/informatica-etl-conversion:collect`, or `:plan` if the corpus is already imported.
+  the denominator: `python3 <plugin>/scripts/infa_corpus.py count`.
+- **Neither** — nothing has been converted and no plan exists. Point at
+  `/informatica-etl-conversion:wave` for a direct conversion, or, for a corpus large enough to
+  want sequencing, at `/informatica-assessment:collect` — a separate plugin, so say so, and
+  `/informatica-assessment:plan` if the corpus is already imported.
 
 ## Step 1 — the plan side
 
 ```bash
-<plugin>/scripts/infa-plan groups <ds>       # TSV: wave, group, mappings, tables
+python3 <plugin>/scripts/infa_plan.py groups <ds>       # TSV: wave, group, mappings, tables
 ```
 
 Groups with zero Informatica mappings are table-only — real migration work, but not work this
@@ -45,12 +47,14 @@ plugin's wave skill performs. Say so rather than reporting them as untouched.
 ls -d waves/*/ 2>/dev/null
 ls waves/<id>/etl-specs/*.discovery.yaml 2>/dev/null | wc -l
 ls waves/<id>/etl-specs/_out-of-scope/*.discovery.yaml 2>/dev/null | wc -l
-for c in waves/<id>/discovery-out/*/data-contract.json; do
-  jq -r --arg c "$c" '[$c, (.approvedByHuman|tostring),
-                       ((.sourceToTarget.humanReviewItems // []) | length)] | @tsv' "$c"
-done
+python3 <plugin>/scripts/review_queue.py status --dir waves/<id>/discovery-out
 ls waves/<id>/pipeline-out/*/build-report.txt 2>/dev/null | wc -l
 ```
+
+`review_queue.py status` prints one row per contract — approved yes/no, open items,
+how many are commented, and how many the last resolve sweep refused — plus the approved
+count. Invoke it by path from this plugin's `scripts/` directory; it is Python 3 standard
+library only, so it runs the same on Windows, macOS, and Linux.
 
 Wave directory names are `w<wave>-<group-sanitized>`, so they map back to plan groups by
 construction — except `waves/all/`, which is a direct conversion of the whole corpus.
