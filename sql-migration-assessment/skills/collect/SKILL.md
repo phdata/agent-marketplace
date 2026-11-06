@@ -30,10 +30,10 @@ their own check below.
 **This is the decision the rest of the assessment hangs on.** `references/platform-support.md`
 (two levels up from this skill's directory) has the full matrix and, more importantly, the two
 one-line `grep`s that read it out of the project's own `docs/toolkit/data-source.adoc` — which
-`toolkit init` writes and which is the actual source of truth. Run those **from the toolkit
-project**, the directory holding `toolkit.conf`: that path is relative to the project, not to
-this plugin, and a bare `No such file or directory` means the wrong directory or a
-`--docs=false` init, both of which that reference tells you how to fix. Use those whenever the platform
+`toolkit init` writes and which is the actual source of truth. Those recipes resolve the project
+themselves with `toolkit_check.py --project-dir`, so they work from any directory; a bare
+`No such file or directory` means the docs were skipped with `--docs=false`, which that reference
+tells you how to fix. Use those whenever the platform
 is not one of the three below, or whenever a user says a route should work that the table says
 does not: the toolkit gains platforms, and a stale "not supported" is the one error here that
 fails silently rather than loudly.

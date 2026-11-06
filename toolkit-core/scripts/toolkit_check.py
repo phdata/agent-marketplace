@@ -5,7 +5,7 @@ toolkit_check.py - layered preflight checks for the phData Toolkit CLI.
 Usage:
     python3 toolkit_check.py [--level python|binary|project|datasource|connect]
                              [--datasource NAME] [--quiet] [--hook]
-                             [--list-datasources]
+                             [--list-datasources] [--project-dir]
 
 Levels are cumulative (python -> binary -> project -> datasource -> connect); the first
 failure stops the run. Default level: datasource - everything that can be verified without
@@ -39,6 +39,10 @@ Modes:
                         sessions are never blocked
     --list-datasources  print configured datasource names (one per line) and exit; used by
                         toolkit_setup.py and the /toolkit-core skills
+    --project-dir       print the enclosing toolkit project's directory and exit (12 if there
+                        is none). Starts no JVM and does not need the toolkit binary, so it is
+                        the cheap way to resolve a path inside the project - the toolkit's own
+                        docs under docs/toolkit/, say - from any working directory
 
 Known limitation: the datasource level parses toolkit.conf textually. Datasources defined in
 HOCON include files, or declared entirely on one line, are not detected; define them in
@@ -375,6 +379,7 @@ def main(argv=None):
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--hook", action="store_true")
     parser.add_argument("--list-datasources", action="store_true")
+    parser.add_argument("--project-dir", action="store_true")
     parser.add_argument("-h", "--help", action="store_true")
 
     try:
@@ -384,7 +389,7 @@ def main(argv=None):
         # this script's contract already specifies.
         sys.stderr.write(
             "usage: toolkit_check.py [--level python|binary|project|datasource|connect] "
-            "[--datasource NAME] [--quiet] [--hook] [--list-datasources]\n"
+            "[--datasource NAME] [--quiet] [--hook] [--list-datasources] [--project-dir]\n"
         )
         return EXIT_USAGE
 
@@ -396,6 +401,20 @@ def main(argv=None):
         return run_hook()
 
     report = Reporter(args.quiet)
+
+    if args.project_dir:
+        conf = find_project_conf()
+        if conf is None:
+            report.fail(
+                EXIT_NO_PROJECT,
+                "project",
+                "no {} found in {}, its parents, or $TOOLKIT_PROJECT_HOME".format(
+                    CONF_NAME, Path.cwd()
+                ),
+                "run /toolkit-core:setup to initialize a toolkit project here",
+            )
+        print(conf.resolve().parent)
+        return 0
 
     if args.list_datasources:
         conf = find_project_conf()

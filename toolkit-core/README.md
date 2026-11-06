@@ -55,7 +55,10 @@ Defaults to `--level datasource` — everything verifiable without the network. 
 is opt-in because it runs `toolkit ds list`, which connection-tests datasources.
 `--list-datasources` prints configured datasource names (parsed from `toolkit.conf`).
 `--level python` checks only the interpreter, which is the cheapest way for a skill to confirm
-the other plugins' scripts can run at all.
+the other plugins' scripts can run at all. `--project-dir` prints the enclosing project's
+directory and exits 12 if there is none — it starts no JVM and does not need the toolkit binary,
+so it is the cheap way to resolve a path inside the project (the toolkit's own docs under
+`docs/toolkit/`, for instance) from any working directory.
 
 Workflow-plugin usage pattern:
 

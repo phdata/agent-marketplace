@@ -16,21 +16,25 @@ So when the platform in front of you is anything other than SQL Server, Oracle o
 when a user says a route should work that the table says does not, check the project's own copy
 first.
 
-**Run these from the toolkit project** — the directory holding `toolkit.conf`, which
-`toolkit_check.py --level project` prints as its `ok project:` line. The path is relative to that
-project, *not* to this plugin and not to wherever the shell happens to be; running it in the
-wrong directory is the one way this fails, and it fails with a bare
-`No such file or directory`:
+The docs live **inside the toolkit project**, not in this plugin and not in whatever directory
+the shell happens to be in — so resolve the project first rather than assuming the cwd.
+`toolkit_check.py --project-dir` prints it, walking up for `toolkit.conf` and honouring
+`$TOOLKIT_PROJECT_HOME`, and it starts no JVM:
 
 ```bash
-cd "<the toolkit project>"
+PROJ="$(python3 "$TOOLKIT_CHECK" --project-dir)" || exit   # exits 12 with a hint if there is none
+DOCS="$PROJ/docs/toolkit/data-source.adoc"
 
 # which object types `collect remote` can collect, per platform
-grep -A50 '^===== Supported Object Types' docs/toolkit/data-source.adoc | grep -E '^\|'
+grep -A50 '^===== Supported Object Types' "$DOCS" | grep -E '^\|'
 
 # which platforms `ds lineage` parses, and from which collection route
-grep -A24 'Lineage Support' docs/toolkit/data-source.adoc | grep -E '^\| '
+grep -A24 'Lineage Support' "$DOCS" | grep -E '^\| '
 ```
+
+Written that way these work from any directory. The earlier form took a bare relative path and
+failed with nothing but `No such file or directory` whenever the cwd was not the project — which
+is most of the time, since the agent is usually somewhere else entirely.
 
 Two things that make the file absent even inside a real project, both recoverable:
 
