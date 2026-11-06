@@ -5,27 +5,27 @@ description: Show a doctor-style report of the phData Toolkit CLI installation â
 
 # Toolkit status
 
-> `toolkit-check` and `toolkit-setup` below are scripts bundled with this plugin, **not**
+> `toolkit_check.py` and `toolkit_setup.py` below are scripts bundled with this plugin, **not**
 > commands on PATH. Invoke them by the absolute paths the SessionStart hook prints at
 > session start (`<plugin>/scripts/â€¦`); `CLAUDE_PLUGIN_ROOT` is not set for Bash.
 
 Run both helpers and render one readable report:
 
 ```bash
-"$TOOLKIT_CHECK"            # layered checks: binary -> project -> datasource
-"$TOOLKIT_SETUP" detect     # raw facts: os, java, install path, project, datasources
+python3 "$TOOLKIT_CHECK"            # layered checks: python -> binary -> project -> datasource
+python3 "$TOOLKIT_SETUP" detect     # raw facts: os, java, install path, project, datasources
 ```
 
 Present a short table: binary (path + version), Java, project (`toolkit.conf` path), datasources
 (names), and LLM client (`llm_client` from detect; `none` means the phData Bedrock fallback for
-agent commands). Use the `ok`/`fail` lines from `toolkit-check` as the source of truth and
+agent commands). Use the `ok`/`fail` lines from `toolkit_check.py` as the source of truth and
 `detect` output for the detail values.
 
 If the user wants connectivity verified too (this touches the network and connection-tests the
 datasource), add:
 
 ```bash
-"$TOOLKIT_CHECK" --level connect --datasource <name>
+python3 "$TOOLKIT_CHECK" --level connect --datasource <name>
 ```
 
 End with the recommended next step:

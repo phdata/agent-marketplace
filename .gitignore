@@ -1,0 +1,6 @@
+# Python bytecode from running the plugins' bundled scripts in place
+__pycache__/
+*.py[cod]
+
+# Eval results are per-run artifacts, not source
+*/evals/results/

@@ -76,7 +76,7 @@ informatica-etl-conversion ships the same two scripts, so either plugin stands a
 ## Prerequisites
 
 - **toolkit-core** (installed automatically as a dependency): the toolkit binary, a project, and
-  a datasource entry for the legacy database. Skills preflight with `toolkit-check`.
+  a datasource entry for the legacy database. Skills preflight with `toolkit_check.py`.
 - **Legacy source dialect** must be one of oracle, mssql, teradata, snowflake, databricks — the
   dialects the collect store parses. Anything else can't be collected today.
 - **Database access is optional.** A stub connection assesses a legacy database entirely

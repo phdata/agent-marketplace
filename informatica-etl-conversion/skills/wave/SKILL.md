@@ -36,14 +36,14 @@ Unlike the assessment plugin's skills, this one needs an LLM and an agent licens
 
 ```bash
 TOOLKIT_CHECK="<absolute path from the toolkit-core SessionStart hook>"
-"$TOOLKIT_CHECK" || exit
-"$TOOLKIT_CHECK" --list-datasources
+python3 "$TOOLKIT_CHECK" || exit
+python3 "$TOOLKIT_CHECK" --list-datasources
 ```
 
 toolkit-core's scripts are not on PATH (plugin `bin/` directories aren't permitted, and
 `CLAUDE_PLUGIN_ROOT` isn't set for Bash) — its SessionStart hook prints their absolute
 paths into the session at startup. Use that path; if the hook didn't run, the script is
-`scripts/toolkit-check` in the installed toolkit-core plugin directory.
+`scripts/toolkit_check.py` in the installed toolkit-core plugin directory.
 
 - **The corpus**: everything below reads PowerCenter XML from `informatica-xml/` in the toolkit
   project. If it isn't there, ask for the directory of exported XML and copy it in, **preserving
@@ -65,7 +65,7 @@ paths into the session at startup. Use that path; if the hook didn't run, the sc
   before anything else, and confirm it with the user rather than inferring it from the
   datasource list. If none is configured, stop and hand off to `/toolkit-core:connect`; the
   legacy source datasource is not a substitute. Once named, probe it:
-  `toolkit-check --level connect --datasource <target-ds>`.
+  `toolkit_check.py --level connect --datasource <target-ds>`.
 - **Target platform**: `agent discovery` and `pipeline-build` support Snowflake and Databricks
   only. Another target: stop here and explain.
 - **Target datasource filters**: discovery scans and profiles the warehouse live on *every*

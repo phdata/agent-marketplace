@@ -4,6 +4,6 @@
   "version": "0.1.0",
   "author": { "name": "phData" },
   "dependencies": [
-    { "name": "toolkit-core", "version": "^0.2" }
+    { "name": "toolkit-core", "version": "^0.3" }
   ]
 }
