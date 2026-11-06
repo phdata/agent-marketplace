@@ -14,15 +14,32 @@ against, because it is silent.
 
 So when the platform in front of you is anything other than SQL Server, Oracle or Teradata, or
 when a user says a route should work that the table says does not, check the project's own copy
-first. `toolkit init` writes it, and both tables have a unique anchor:
+first.
+
+**Run these from the toolkit project** — the directory holding `toolkit.conf`, which
+`toolkit_check.py --level project` prints as its `ok project:` line. The path is relative to that
+project, *not* to this plugin and not to wherever the shell happens to be; running it in the
+wrong directory is the one way this fails, and it fails with a bare
+`No such file or directory`:
 
 ```bash
+cd "<the toolkit project>"
+
 # which object types `collect remote` can collect, per platform
 grep -A50 '^===== Supported Object Types' docs/toolkit/data-source.adoc | grep -E '^\|'
 
 # which platforms `ds lineage` parses, and from which collection route
 grep -A24 'Lineage Support' docs/toolkit/data-source.adoc | grep -E '^\| '
 ```
+
+Two things that make the file absent even inside a real project, both recoverable:
+
+- **`toolkit init` was run with `--docs=false`.** Re-run plain `toolkit init` in that project: it
+  reports "already initialized" and still extracts `docs/toolkit/`, preserving any file that was
+  modified. Verified — that is how the docs arrive after the fact.
+- **You are not in a toolkit project at all** (a plugin checkout, a home directory). There is
+  nothing to read; find the project, or fall back to the published docs at
+  https://toolkit.phdata.io/docs, which carry the same tables.
 
 (`Supported Platforms` appears twice in that file — the first belongs to `ds row-diff`. Anchor on
 `Lineage Support` instead, which is unique.)
