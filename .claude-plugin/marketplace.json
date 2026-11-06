@@ -27,6 +27,11 @@
       "name": "informatica-etl-conversion",
       "source": "./informatica-etl-conversion",
       "description": "Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines via agent etl-extract, discovery with a grouped human-review queue, and pipeline-build — one migration-plan group at a time, or a small corpus in a single pass"
+    },
+    {
+      "name": "procedure-etl-conversion",
+      "source": "./procedure-etl-conversion",
+      "description": "Convert SQL Server (T-SQL) and Oracle (PL/SQL) stored-procedure ETL into Snowflake pipelines via agent etl-extract --etl-platform=procedure (deterministic, no LLM), discovery with a grouped human-review queue, and pipeline-build"
     }
   ]
 }

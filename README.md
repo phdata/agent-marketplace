@@ -13,6 +13,7 @@ so engineering repos don't each carry their own `.claude/skills/`.
 | [toolkit-datagen](toolkit-datagen/) | Synthetic, fake, mock, and test data via `toolkit datagen`: the agent writes a data spec, the toolkit generates related tables at any volume to CSV or straight into a database, reproducibly via a seed. Also clones the shape of an existing database without copying rows. |
 | [informatica-assessment](informatica-assessment/) | Assess an Informatica PowerCenter estate: export completeness, `collect etl`, `ds lineage`, and `migration plan` into dependency-ordered scored waves with an inventory. Offline-capable; no LLM or agent license. |
 | [informatica-etl-conversion](informatica-etl-conversion/) | Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines: `agent etl-extract` behind a dry-run cost gate, discovery with a grouped human-review queue, and pipeline-build — one migration-plan group at a time, or a small corpus in a single pass. |
+| [procedure-etl-conversion](procedure-etl-conversion/) | Convert SQL Server (T-SQL) and Oracle (PL/SQL) stored-procedure ETL into Snowflake pipelines: `agent etl-extract --etl-platform=procedure` parses and dialect-translates each procedure **deterministically, with no LLM**, then discovery with a grouped review queue and pipeline-build. Snowflake target only. |
 
 The two Informatica plugins split along the line where the cost does: everything in
 `informatica-assessment` is free and needs no LLM, while every conversion step is
@@ -31,11 +32,13 @@ Inside Claude Code:
 /plugin install toolkit-datagen@phdata
 /plugin install informatica-assessment@phdata
 /plugin install informatica-etl-conversion@phdata
+/plugin install procedure-etl-conversion@phdata
 ```
 
 Dependencies install automatically from this marketplace: `toolkit-pipeline`,
 `toolkit-datagen`, and `informatica-assessment` each pull in `toolkit-core`, and
-`informatica-etl-conversion` pulls in `toolkit-core` and `toolkit-pipeline`.
+`informatica-etl-conversion` and `procedure-etl-conversion` each pull in `toolkit-core` and
+`toolkit-pipeline`.
 
 For team/repo-wide auto-install, check a `.claude/settings.json` into the consuming repo —
 see [docs/team-setup.md](docs/team-setup.md).
@@ -51,6 +54,7 @@ cortex plugin install github:phdata/agent-marketplace/toolkit-pipeline
 cortex plugin install github:phdata/agent-marketplace/toolkit-datagen
 cortex plugin install github:phdata/agent-marketplace/informatica-assessment
 cortex plugin install github:phdata/agent-marketplace/informatica-etl-conversion
+cortex plugin install github:phdata/agent-marketplace/procedure-etl-conversion
 ```
 
 Notes:
@@ -58,7 +62,8 @@ Notes:
 - Append `@<branch>` to pin a branch (e.g. `github:phdata/agent-marketplace/toolkit-core@feature/initial_plugin`
   while testing pre-release changes); the subdirectory path goes *before* the `@`.
 - Cortex does not auto-install dependencies — install `toolkit-core` explicitly alongside any
-  other plugin, plus `toolkit-pipeline` for `informatica-etl-conversion`.
+  other plugin, plus `toolkit-pipeline` for `informatica-etl-conversion` and
+  `procedure-etl-conversion`.
 - `cortex plugin update` re-fetches from the pinned source; `cortex plugin list` shows what's
   installed and enabled.
 - Teams can also ship these via a Snowflake connection profile — see

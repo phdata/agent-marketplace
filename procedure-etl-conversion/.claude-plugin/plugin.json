@@ -1,0 +1,10 @@
+{
+  "name": "procedure-etl-conversion",
+  "description": "Convert SQL Server (T-SQL) and Oracle (PL/SQL) stored-procedure ETL into Snowflake pipelines: toolkit agent etl-extract --etl-platform=procedure parses each procedure body, walks its branches and loops to find the loads, and dialect-translates them with no LLM, emitting one dataspec per target; agent discovery then resolves each against the target warehouse into a data contract, a grouped human-review queue drives those to approved, and agent pipeline-build generates the transforms, tests, and synthetic-data spec. Extraction is deterministic and can run entirely LLM-free. Converts one migration-plan group at a time, or every procedure in one pass when there is no plan.",
+  "version": "0.1.0",
+  "author": { "name": "phData" },
+  "dependencies": [
+    { "name": "toolkit-core", "version": "^0.3" },
+    { "name": "toolkit-pipeline", "version": "^0.3" }
+  ]
+}
