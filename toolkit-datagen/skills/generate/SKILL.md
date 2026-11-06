@@ -24,13 +24,13 @@ reproducible or regenerated later — is a spec.
 
 ```bash
 TOOLKIT_CHECK="<absolute path from the toolkit-core SessionStart hook>"
-"$TOOLKIT_CHECK" --level project || exit
+python3 "$TOOLKIT_CHECK" --level project || exit
 ```
 
 toolkit-core's scripts are not on PATH (plugin `bin/` directories aren't permitted, and
 `CLAUDE_PLUGIN_ROOT` isn't set for Bash) — its SessionStart hook prints their absolute
 paths into the session at startup. Use that path; if the hook didn't run, the script is
-`scripts/toolkit-check` in the installed toolkit-core plugin directory.
+`scripts/toolkit_check.py` in the installed toolkit-core plugin directory.
 
 On failure surface the `hint:` line and stop (`/toolkit-core:setup`). If it prints a `note:`
 about the project directory, run every `toolkit` command below from that directory (or export
@@ -147,7 +147,7 @@ large runs.
 ## Step 5 — before any `jdbc` run
 
 ```bash
-"$TOOLKIT_CHECK" --level connect --datasource <datasource>
+python3 "$TOOLKIT_CHECK" --level connect --datasource <datasource>
 ```
 
 Then confirm with the user, explicitly, every time:

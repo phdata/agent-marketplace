@@ -5,7 +5,7 @@ description: Configure the optional llmClient block in toolkit.conf so toolkit a
 
 # Configure the toolkit LLM client (optional)
 
-> `toolkit-check` and `toolkit-setup` below are scripts bundled with this plugin, **not**
+> `toolkit_check.py` and `toolkit_setup.py` below are scripts bundled with this plugin, **not**
 > commands on PATH. Invoke them by the absolute paths the SessionStart hook prints at
 > session start (`<plugin>/scripts/…`); `CLAUDE_PLUGIN_ROOT` is not set for Bash.
 
@@ -23,7 +23,7 @@ judge loops) can exceed them — the examples set `requestTimeout`/`socketTimeou
 
 ## Step 0 — current state
 
-`toolkit-check --level project` finds the `toolkit.conf` to edit; `toolkit-setup detect` reports
+`toolkit_check.py --level project` finds the `toolkit.conf` to edit; `toolkit_setup.py detect` reports
 `llm_client=<type|none>`. `none` + phData auth = Bedrock fallback — functional, but add the
 Bedrock block anyway for the 1000s timeouts.
 

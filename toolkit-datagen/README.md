@@ -61,7 +61,7 @@ Both skills say so explicitly, so the model doesn't over-route:
 ## Prerequisites
 
 - **toolkit-core** (installed automatically as a dependency): the toolkit binary and a project.
-  Skills preflight with `toolkit-check`.
+  Skills preflight with `toolkit_check.py`.
 - **A toolkit project directory.** `datagen info` and `datagen validate` refuse to run outside
   one; `file` and `show` do not care.
 - **A datasource** only for the `jdbc` output and for `datagen scan` — `/toolkit-core:connect`

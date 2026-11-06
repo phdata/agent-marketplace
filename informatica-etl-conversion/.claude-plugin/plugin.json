@@ -1,10 +1,10 @@
 {
   "name": "informatica-etl-conversion",
   "description": "Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines: toolkit agent etl-extract behind a dry-run cost gate turns mapping XML into dataspecs, agent discovery resolves each against the target warehouse into a data contract, a grouped human-review queue drives those contracts to approved, and agent pipeline-build generates the transforms, tests, and synthetic-data spec. Converts one migration-plan group at a time, or a whole small corpus in a single pass when there is no plan.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": { "name": "phData" },
   "dependencies": [
-    { "name": "toolkit-core", "version": "^0.2" },
-    { "name": "toolkit-pipeline", "version": "^0.2" }
+    { "name": "toolkit-core", "version": "^0.3" },
+    { "name": "toolkit-pipeline", "version": "^0.3" }
   ]
 }

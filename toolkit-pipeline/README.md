@@ -54,7 +54,7 @@ data requests that have nothing to do with a pipeline).
 ## Prerequisites
 
 - **toolkit-core** (installed automatically as a dependency): toolkit binary, project, and a
-  configured datasource. Skills preflight with `toolkit-check`.
+  configured datasource. Skills preflight with `toolkit_check.py`.
 - **Platform**: the pipeline process supports **Snowflake and Databricks** only (datasource and
   `targetPlatform`). The other JDBC types toolkit-core can connect serve the broader toolkit
   workflows (scan/profile/diff/translate), not this plugin.

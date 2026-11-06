@@ -1,11 +1,11 @@
 ---
 name: connect
-description: Add or verify a JDBC connection and datasource in toolkit.conf for any supported type — Snowflake, SQL Server, Oracle, Postgres, MySQL, Hive, Databricks, Athena — including JDBC driver installation for non-bundled types and verification via a scoped ds scan. Use when configuring data sources, fixing connection errors, or when toolkit-check reports no datasource.
+description: Add or verify a JDBC connection and datasource in toolkit.conf for any supported type — Snowflake, SQL Server, Oracle, Postgres, MySQL, Hive, Databricks, Athena — including JDBC driver installation for non-bundled types and verification via a scoped ds scan. Use when configuring data sources, fixing connection errors, or when toolkit_check.py reports no datasource.
 ---
 
 # Connect a datasource
 
-> `toolkit-check` and `toolkit-setup` below are scripts bundled with this plugin, **not**
+> `toolkit_check.py` and `toolkit_setup.py` below are scripts bundled with this plugin, **not**
 > commands on PATH. Invoke them by the absolute paths the SessionStart hook prints at
 > session start (`<plugin>/scripts/…`); `CLAUDE_PLUGIN_ROOT` is not set for Bash.
 
@@ -14,12 +14,12 @@ Goal: a named connection + datasource in the project's `toolkit.conf` that a sco
 
 ## Step 0 — preflight
 
-Run `toolkit-check --level project`. On failure, surface the `hint:` line and stop — the user
+Run `toolkit_check.py --level project`. On failure, surface the `hint:` line and stop — the user
 needs `/toolkit-core:setup` first. On success it prints the `toolkit.conf` path; that's the file
 to edit. If a `note:` line follows, heed it: the toolkit only reads
 `$TOOLKIT_PROJECT_HOME/toolkit.conf` (default `./toolkit.conf`), so run every `toolkit` command
 in this skill from the conf's directory (or export `TOOLKIT_PROJECT_HOME`).
-`toolkit-check --list-datasources` shows what's already configured.
+`toolkit_check.py --list-datasources` shows what's already configured.
 
 ## Step 1 — gather
 
@@ -93,7 +93,7 @@ also already have one — check `ls lib/` first.
 
 ## Step 4 — verify
 
-1. `toolkit-check --level datasource --datasource <name>` — config parses and the datasource is
+1. `toolkit_check.py --level datasource --datasource <name>` — config parses and the datasource is
    visible.
 2. `toolkit ds scan <name>` — first real connection. If a `filters` block is set it keeps this
    scoped; without one, consider a narrow first probe via `--filter "MY_DB.MY_SCHEMA.*"`.
@@ -109,4 +109,4 @@ Triage for failures:
 | auth/login error from the database | wrong credentials, role, or auth method | check env values, try the connection from another client |
 | timeout / unknown host | network, VPN, firewall, wrong host | verify host/port, VPN posture |
 
-`toolkit-check --level connect --datasource <name>` re-runs the connectivity probe any time.
+`toolkit_check.py --level connect --datasource <name>` re-runs the connectivity probe any time.
