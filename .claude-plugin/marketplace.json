@@ -19,6 +19,11 @@
       "description": "Synthetic, fake, mock, and test data via toolkit datagen: the agent writes a data spec, the toolkit generates related tables at any volume to CSV or into a database, reproducibly via a seed"
     },
     {
+      "name": "sql-migration-assessment",
+      "source": "./sql-migration-assessment",
+      "description": "Assess a SQL database estate before migrating it: collect object DDL, script files including Teradata BTEQ, or live query history, extract lineage with ds lineage, then cut dependency-ordered scored migration waves with migration plan. SQL Server, Oracle, Teradata, Snowflake, Databricks and more; no LLM required"
+    },
+    {
       "name": "informatica-assessment",
       "source": "./informatica-assessment",
       "description": "Assess an Informatica PowerCenter estate with collect etl, ds lineage, and migration plan: dependency-ordered scored migration waves and an inventory, offline-capable, no LLM required"

@@ -174,9 +174,9 @@ plan built from BTEQ is worth:
 
 ## What this plugin deliberately does not do
 
-- **Assessment.** `collect remote` → `ds lineage` → `migration plan` works for procedures today,
-  but no plugin wraps it yet; run those three commands directly. This plugin reads the resulting
-  plan off disk if it is there.
+- **Assessment.** That is `sql-migration-assessment` — `collect remote` → `ds lineage` →
+  `migration plan`, for SQL Server, Oracle, Teradata and the rest. This plugin reads the plan it
+  writes off disk if it is there, and converts without one otherwise.
 - **Teradata BTEQ**, per the section above — assessable and translatable, not convertible here.
 - **SSIS packages.** `collect remote --types SSIS` sweeps them from MSDB/SSISDB on SQL Server and
   `etl-extract` has no SSIS platform — SSIS is assessable, not convertible, today.

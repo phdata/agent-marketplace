@@ -83,6 +83,15 @@ informatica-etl-conversion ships the same two scripts, so either plugin stands a
   offline; `ds lineage --offline` is then required, since a stub URL must never be dialed.
 - **No LLM, no agent license.** Nothing here calls `toolkit agent *`.
 
+## Relationship to the other assessment plugin
+
+[sql-migration-assessment](../sql-migration-assessment/) runs the same lineage-and-plan path for a
+**database** estate — object DDL, SQL script files including Teradata BTEQ, or live warehouse
+query history — where this plugin starts from a PowerCenter XML corpus imported with
+`collect etl --type=INFORMATICA`. Install that one for SQL Server, Oracle, Teradata, Snowflake or
+Databricks; this one for Informatica. They coexist, and both produce the same `migration plan`
+output, so a mixed estate can be assessed with both and planned as one.
+
 ## Scope
 
 Informatica PowerCenter, starting from an export someone hands you: workflow XML for

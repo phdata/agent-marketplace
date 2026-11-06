@@ -94,8 +94,10 @@ Informatica mapping appears as `INFORMATICA_MAPPING` with an `informatica/<folde
 
 ## Scope notes
 
-Assessment — `collect remote` → `ds lineage` → `migration plan` — works for procedures today but
-is not yet wrapped by a plugin; run those commands directly, and this plugin will read the
-resulting plan off disk. Orchestration between procedures is never captured: extraction follows
+Assessment — `collect remote` → `ds lineage` → `migration plan` — is
+[sql-migration-assessment](../sql-migration-assessment/), which covers it for SQL Server, Oracle
+and the rest; this plugin reads the plan it produces off disk. A procedure appears there as a
+`SCRIPT_FILE` process, and `plan.py kinds <ds>` tells you how many of them an estate has before
+you convert any. Orchestration between procedures is never captured: extraction follows
 loads within a procedure body, never across an `EXEC`/`CALL`, so a procedure that only calls
 others yields no specs and its sequencing stays manual work.

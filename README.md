@@ -11,15 +11,22 @@ so engineering repos don't each carry their own `.claude/skills/`.
 | [toolkit-core](toolkit-core/) | Toolkit CLI foundation: install, PATH setup, project init, JDBC connection/datasource configuration. Required by all other toolkit plugins. |
 | [toolkit-pipeline](toolkit-pipeline/) | Dataspec-driven pipeline generation via `toolkit agent discovery` and `toolkit agent pipeline-build`: SQL, dbt, or PySpark transforms plus data-quality tests and a synthetic-data spec. |
 | [toolkit-datagen](toolkit-datagen/) | Synthetic, fake, mock, and test data via `toolkit datagen`: the agent writes a data spec, the toolkit generates related tables at any volume to CSV or straight into a database, reproducibly via a seed. Also clones the shape of an existing database without copying rows. |
+| [sql-migration-assessment](sql-migration-assessment/) | Assess a SQL database estate before migrating it: collect object DDL, script files (including Teradata BTEQ), or live query history; extract lineage; then cut dependency-ordered scored migration waves with `migration plan`. SQL Server, Oracle, Teradata, Snowflake, Databricks and more. Offline-capable; no LLM or agent license. |
 | [informatica-assessment](informatica-assessment/) | Assess an Informatica PowerCenter estate: export completeness, `collect etl`, `ds lineage`, and `migration plan` into dependency-ordered scored waves with an inventory. Offline-capable; no LLM or agent license. |
 | [informatica-etl-conversion](informatica-etl-conversion/) | Convert Informatica PowerCenter mappings into Snowflake or Databricks pipelines: `agent etl-extract` behind a dry-run cost gate, discovery with a grouped human-review queue, and pipeline-build — one migration-plan group at a time, or a small corpus in a single pass. |
 | [procedure-etl-conversion](procedure-etl-conversion/) | Convert SQL Server (T-SQL) and Oracle (PL/SQL) stored-procedure ETL into Snowflake pipelines: `agent etl-extract --etl-platform=procedure` parses and dialect-translates each procedure **deterministically, with no LLM**, then discovery with a grouped review queue and pipeline-build. Snowflake target only. |
 
-The two Informatica plugins split along the line where the cost does: everything in
-`informatica-assessment` is free and needs no LLM, while every conversion step is
-license-gated and spends tokens. Either installs and runs without the other —
-`informatica-etl-conversion` reads a plan off disk when there is one and converts the whole
-corpus in one pass when there isn't.
+The plugins split along the line where the cost does. **Assessment** —
+`sql-migration-assessment` for databases and SQL scripts, `informatica-assessment` for a
+PowerCenter XML corpus — is free, needs no LLM, and often needs no database access either.
+**Conversion** — `informatica-etl-conversion`, `procedure-etl-conversion` — is license-gated and
+spends tokens. Each side installs and runs without the other: a conversion plugin reads a plan
+off disk when there is one, and converts everything in one pass when there isn't.
+
+What converts, and what only assesses, is worth knowing before starting: a `migration plan` holds
+stored procedures and scripts, Informatica mappings, SSIS packages and bare query patterns, and
+only the first two have a converter today — procedures for SQL Server and Oracle only. Teradata,
+including BTEQ, is fully assessable and not convertible by any current plugin.
 
 ## Install — Claude Code
 
@@ -30,13 +37,15 @@ Inside Claude Code:
 /plugin install toolkit-core@phdata
 /plugin install toolkit-pipeline@phdata
 /plugin install toolkit-datagen@phdata
+/plugin install sql-migration-assessment@phdata
 /plugin install informatica-assessment@phdata
 /plugin install informatica-etl-conversion@phdata
 /plugin install procedure-etl-conversion@phdata
 ```
 
 Dependencies install automatically from this marketplace: `toolkit-pipeline`,
-`toolkit-datagen`, and `informatica-assessment` each pull in `toolkit-core`, and
+`toolkit-datagen`, `sql-migration-assessment` and `informatica-assessment` each pull in
+`toolkit-core`, and
 `informatica-etl-conversion` and `procedure-etl-conversion` each pull in `toolkit-core` and
 `toolkit-pipeline`.
 
@@ -52,6 +61,7 @@ plugin by its subdirectory:
 cortex plugin install github:phdata/agent-marketplace/toolkit-core
 cortex plugin install github:phdata/agent-marketplace/toolkit-pipeline
 cortex plugin install github:phdata/agent-marketplace/toolkit-datagen
+cortex plugin install github:phdata/agent-marketplace/sql-migration-assessment
 cortex plugin install github:phdata/agent-marketplace/informatica-assessment
 cortex plugin install github:phdata/agent-marketplace/informatica-etl-conversion
 cortex plugin install github:phdata/agent-marketplace/procedure-etl-conversion

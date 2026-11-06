@@ -21,8 +21,12 @@ Runs in one of two modes:
 - **Planned** — one **migration-plan group** per run, when a plan exists. Stored procedures
   appear in a plan as `SCRIPT_FILE` processes whose id is the script's path.
 - **Direct** — no plan; every procedure in the input directory is converted in one run. The
-  normal starting point, since no plugin currently produces the plan for procedures (see
-  "Where the procedures come from" below).
+  right choice for a handful of procedures, or when nobody needs a sequence.
+
+The plan comes from `/sql-migration-assessment:plan`, which collects a database's SQL, extracts
+lineage and cuts the waves. Procedures appear there as `SCRIPT_FILE` processes, and that plugin's
+`plan.py kinds <ds>` reports how many an estate holds — worth running before converting anything,
+because it also shows what in the estate has no converter at all.
 
 ```bash
 ls -d migration-plan/*/ 2>/dev/null
