@@ -73,7 +73,7 @@ informatica-assessment ships the same two scripts, so either plugin stands alone
 ## Prerequisites
 
 - **toolkit-core** and **toolkit-pipeline** (installed automatically as dependencies): the
-  toolkit binary, a project, and configured datasources. Skills preflight with `toolkit-check`.
+  toolkit binary, a project, and configured datasources. Skills preflight with `toolkit_check.py`.
 - **The corpus** in `informatica-xml/`, structure as exported. `:wave` copies it in if the
   assessment plugin hasn't already.
 - **Target platform**: Snowflake or Databricks, with the mappings' source data already landed

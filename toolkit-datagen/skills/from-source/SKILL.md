@@ -19,13 +19,13 @@ leaves the source database, and none of it reaches the generated spec.
 
 ```bash
 TOOLKIT_CHECK="<absolute path from the toolkit-core SessionStart hook>"
-"$TOOLKIT_CHECK" --level connect --datasource <source-ds> || exit
+python3 "$TOOLKIT_CHECK" --level connect --datasource <source-ds> || exit
 ```
 
 toolkit-core's scripts are not on PATH (plugin `bin/` directories aren't permitted, and
 `CLAUDE_PLUGIN_ROOT` isn't set for Bash) — its SessionStart hook prints their absolute
 paths into the session at startup. Use that path; if the hook didn't run, the script is
-`scripts/toolkit-check` in the installed toolkit-core plugin directory.
+`scripts/toolkit_check.py` in the installed toolkit-core plugin directory.
 
 The source needs a real connection — hand off to `/toolkit-core:connect` if there isn't one. The
 scanning user needs data-source scan rights plus `SELECT` on every table to be matched.
