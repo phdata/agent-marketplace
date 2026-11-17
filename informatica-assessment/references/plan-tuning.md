@@ -69,6 +69,7 @@ stat columns, table rows fill the score columns.
 | `--hub-min-component-size <tables>` | | Only components at least this large get hub extraction |
 | `--hub-max-tables <tables>` | | Cap on the shared-foundation group |
 | `--jaccard-merge-threshold <0..1>` | | Two final tables with overlapping upstreams should migrate together (1 = identical upstreams only, 0 = merge anything) |
+| `--target <table>` | none, repeatable | **Scope the whole plan** to this table and everything it is transitively built from — "plan this mart first" rather than planning the estate. Pass a long list as an `@file` |
 
 Small migrations (under ~50 tables) need the thresholds lowered or everything lands in one group:
 

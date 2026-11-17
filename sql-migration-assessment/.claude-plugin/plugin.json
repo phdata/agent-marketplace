@@ -1,0 +1,9 @@
+{
+  "name": "sql-migration-assessment",
+  "description": "Assess a SQL database estate before migrating it: collect the SQL that defines the workload — object DDL with toolkit collect remote, script files including Teradata BTEQ with collect script, or live warehouse query history with collect history — extract table-level lineage with ds lineage, then decompose the estate into dependency-ordered, scored migration waves with migration plan. Covers SQL Server, Oracle, Teradata, Snowflake, Databricks and the other JDBC sources the toolkit parses, each by whichever collection route it supports. Produces a plan of record with an inventory, cutover constraints, and dead, audit and interface objects called out; needs no LLM and no agent license.",
+  "version": "0.1.0",
+  "author": { "name": "phData" },
+  "dependencies": [
+    { "name": "toolkit-core", "version": "^0.3" }
+  ]
+}
